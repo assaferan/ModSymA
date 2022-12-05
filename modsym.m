@@ -176,7 +176,7 @@ freeze;
  
  ***************************************************************************/
 
-import "../GrpGL2Hat/GrpGL2Hat/misc.m" : Conjugates, IsConjugate, NormalizerGrpMat;
+import "../GrpGL2Hat/misc.m" : Conjugates, IsConjugate, NormalizerGrpMat;
 
 import "arith.m" : ReductionMap,
                    SmallestPrimeNondivisor;

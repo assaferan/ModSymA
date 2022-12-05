@@ -548,7 +548,7 @@ elif G2 subset G1 then// G2 subset G1 -- raise level
   eps_vals := [(dd@eps1)^(-1) : dd in D];
   // R   := DegeneracyCosetReps(N1, N2, d);
   if IsTrivial(eps1) then
-      RB := [ &cat[ModularSymbolApply(M1, r, B[i]) : r in R] 
+      RB := [ &cat[ModularSymbolApply(r, B[i]) : r in R] 
               : i in [1..#B]];
       // This step takes a lot of time.
       A := [Representation(ConvFromModularSymbol(M2,RB[i])) 
