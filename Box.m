@@ -1989,12 +1989,12 @@ end function;
 intrinsic ModularCurve(G::GrpGL2Hat : Proof := false, Al := "Canonical") -> Crv[FldRat],SeqEnum[RngSerPowElt], MonStgElt
 {Returns the canonical embedding of the modular curve associated to G,
  together with the q-expansions of a basis of cusp forms, and the type of model.}
-/*
+
   if IsGamma0(G) then
       db := ModularCurveDatabase("Canonical");
       return ModularCurve(db, Level(G));
   end if;
-*/
+
   genus := Genus(G);
   require genus ge 2 : "Currenty not implemented for genus < 2";
   return ModularCurveBox(ImageInLevelGL(G), genus : Proof := Proof, Al := Al);

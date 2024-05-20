@@ -1178,16 +1178,3 @@ function sameF(F1, F2)
     F3 := [[R!v : v in f] : f in F1];
     return &and [F2[i] eq F3[i] : i in [1..#F2]];
 end function;
-
-/*
-intrinsic ModularCurve(G::GrpPSL2) -> Crv, SeqEnum[Pt], SeqEnum[RngSerPowElt]
-{Returns the modular curve X_G, its cusps and the canonical coordinate map.}
-  genus := Genus(G);
-  max_deg := Maximum(7-genus, 2);
-  bound := HeckeBound(ModularSymbols(G));
-  prec := Level(G)*bound;
-  X, X_cusps, fs := CremonaMethod(ImageInLevel(G), prec, max_deg);
-  _<[x]> := CoordinateRing(X);
-  return X, X_cusps, fs;
-end intrinsic;
-*/
