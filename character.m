@@ -533,7 +533,13 @@ intrinsic '@'(M::AlgMatElt[RngIntRes], x::GrpChrElt) -> RngElt
        return 1;
    end if;
 end intrinsic;
- 
+
+intrinsic '^'(chi::GrpChrElt, n::RngIntElt) -> GrpChrElt
+{"} // "
+    chi_n := map< Domain(chi`Map) -> Codomain(chi`Map) | x :-> chi`Map(x)^n>;
+    return initGrpChrElt(Parent(chi), chi_n);
+end intrinsic;
+
 intrinsic ValuesOnUnitGenerators(x::GrpChrElt) -> SeqEnum
 {The values of x on the ordered sequence generators of Q, where
  Q is the domain of x.}
