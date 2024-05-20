@@ -556,7 +556,7 @@ elif G2 subset G1 then// G2 subset G1 -- raise level
   else
       A   := [ &+[eps_vals[j]*
                   Representation(ConvFromModularSymbol(M2,
-						       ModularSymbolApply(M1, R[j], B[i]))) :
+						       ModularSymbolApply(R[j], B[i]))) :
 		  j in [1..#R]] : i in [1..#B]];
   end if;
   else
