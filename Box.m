@@ -19,8 +19,8 @@ freeze;
 *************************************************************************************
 */
 
-import "ModSym/linalg.m" : KernelOn, Restrict, RelativeBasis, RelativeEltseq;
-import "ModSym/operators.m" : ActionOnModularSymbolsBasis;
+import "linalg.m" : KernelOn, Restrict, RelativeBasis, RelativeEltseq;
+import "operators.m" : ActionOnModularSymbolsBasis;
 
 import "ModelsAndMaps.m" : FindCurveSimple,
        FindHyperellipticCurve,

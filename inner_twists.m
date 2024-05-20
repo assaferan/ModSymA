@@ -43,22 +43,22 @@ function ComplexConjugationMatrix(K, n)
 end function;
 
 
-function MatrixOnModSymBases(M1, M2, g)
+function MatrixOnModSymABases(M1, M2, g)
    return MatrixAlgebra(BaseField(M1),Dimension(M1))!
        &cat[Eltseq(M2!ModularSymbolApply(M1,g,b)) : b in ModularSymbolsBasis(M1)];
 end function;
 
-function ConjugateModSym(x)
+function ConjugateModSymA(x)
    return [<ComplexConjugate(Coefficients(a[1])[1]),a[2]> : a in x];
 end function;
 
-function MatrixOnModSymBasesConj(M, g)
+function MatrixOnModSymABasesConj(M, g)
    return RMatrixSpace(BaseField(M),Dimension(M),Dimension(M))!
-       &cat[Eltseq(M!ConjugateModSym(ModularSymbolApply(M,g,b))) : b in ModularSymbolsBasis(M)];
+       &cat[Eltseq(M!ConjugateModSymA(ModularSymbolApply(g,b))) : b in ModularSymbolsBasis(M)];
 end function;
 
 function FieldAutomorphismMatrix(M, phi)
-   assert Type(M) eq ModSym;
+   assert Type(M) eq ModSymA;
 
 // Matrix of base field automorphism phi with respect to same basis that restriction
 // of scalars are computed with respect to.
@@ -78,7 +78,7 @@ function FieldAutomorphismMatrix(M, phi)
 end function;
 
 /*function Cached_ActionOnModularSymbolsBasis(g,M)
-   assert Type(M) eq ModSym;
+   assert Type(M) eq ModSymA;
    assert Type(g) eq SeqEnum;
    assert IsAmbientSpace(M);
    if not assigned M`action_on_modsyms then
@@ -97,14 +97,14 @@ end function;
 */
 
 /*
-intrinsic GOOD_InnerTwistOperator(M::ModSym, chi::GrpDrchElt) -> AlgMatElt
+intrinsic GOOD_InnerTwistOperator(M::ModSymA, chi::GrpDrchAElt) -> AlgMatElt
 {}
    return InnerTwistOperator(M, chi);
 end intrinsic;
 */
 
 
-intrinsic InnerTwistOperator(M::ModSym, chi::GrpDrchElt) -> AlgMatElt
+intrinsic InnerTwistOperator(M::ModSymA, chi::GrpDrchAElt) -> AlgMatElt
 {Inner twist on restriction of scalars of M to Q.}
    if not assigned M`inner_twists then
       M`inner_twists := [* *];
@@ -189,7 +189,7 @@ intrinsic InnerTwistOperator(M::ModSym, chi::GrpDrchElt) -> AlgMatElt
 end intrinsic;
 
 function Compute_Image_Under_Eta_Using_Symbols(chi, R, x)
-   assert Type(x) eq ModSymElt;
+   assert Type(x) eq ModSymAElt;
    assert Type(R) eq SeqEnum;
    assert Type(chi) eq GrpDrchElt;
    M := AmbientSpace(Parent(x));
@@ -205,7 +205,7 @@ function Compute_Image_Under_Eta_Of_Manin_Symbol(M, chi, psi, R, P, cd)
 end function;
 
 function Compute_Image_Under_Eta(chi, R, x)
-   assert Type(x) eq ModSymElt;
+   assert Type(x) eq ModSymAElt;
    assert Type(R) eq SeqEnum;
    assert Type(chi) eq GrpDrchElt;
 
@@ -253,9 +253,9 @@ function Compute_Image_Under_Eta(chi, R, x)
 end function;
 
 function RestrictToQ_and_Change_By_Automorphism(M, chi, A)
-   Type(M) eq ModSym;
+   Type(M) eq ModSymA;
    Type(A) eq AlgMatElt;
-   Type(chi) eq GrpDrchElt;
+   Type(chi) eq GrpDrchAElt;
 
    K := BaseField(M);
    eps := DirichletCharacter(M);
@@ -280,8 +280,8 @@ function RestrictToQ_and_Change_By_Automorphism(M, chi, A)
 end function;
 
 function Compute_Coset_Reps(M, chi)
-   Type(M) eq ModSym;
-   Type(chi) eq GrpDrchElt;
+   Type(M) eq ModSymA;
+   Type(chi) eq GrpDrchAElt;
 
    N := Level(M);
    r := Conductor(chi);
@@ -294,7 +294,7 @@ function Compute_Coset_Reps(M, chi)
    return R;
 end function;
 
-intrinsic Experimental_InnerTwistOperator(M::ModSym, chi::GrpDrchElt) -> AlgMatElt
+intrinsic Experimental_InnerTwistOperator(M::ModSymA, chi::GrpDrchAElt) -> AlgMatElt
 {Inner twist on restriction of scalars of M to Q.  Use Manin symbols for speed.}
 // assert IsAmbientSpace(M);
    if not assigned M`inner_twists then

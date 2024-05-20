@@ -10,7 +10,7 @@ freeze;
 
 debug := false;
 
-intrinsic Twist(f::RngSerPowElt, chi::GrpDrchElt) -> RngSerPowElt
+intrinsic Twist(f::RngSerPowElt, chi::GrpDrchAElt) -> RngSerPowElt
 {Twist the power series f by the character chi.}
     prec := AbsolutePrecision(f);
     // R := Parent(f);
@@ -118,8 +118,8 @@ function associated_newspace(M)
 end function;
 
 
-intrinsic IsTwist(M1::ModSym, M2::ModSym, p::RngIntElt : Bound:=0)
-       -> BoolElt, GrpDrchElt
+intrinsic IsTwist(M1::ModSymA, M2::ModSymA, p::RngIntElt : Bound:=0)
+       -> BoolElt, GrpDrchAElt
 {
 Given two spaces of modular symbols representing (Galois orbits of) newforms,
 this returns true iff some Galois conjugate (over Q) of M2 is the twist of M1 
@@ -302,8 +302,8 @@ if debug then printf "\n"; end if;
 end intrinsic;
 
 
-intrinsic IsMinimalTwist(M::ModSym, p::RngIntElt : Bound:=0)
-       -> BoolElt, ModSym, GrpDrchElt
+intrinsic IsMinimalTwist(M::ModSymA, p::RngIntElt : Bound:=0)
+       -> BoolElt, ModSymA, GrpDrchAElt
 {
 Given a Hecke-irreducible space of modular symbols of level N,
 returns true if the associated newform is not a twist of an
@@ -470,18 +470,3 @@ end function;
 function norms(M, n)
   return [AbsoluteNorm(eigenvalue(M,l)) : l in PrimesUpTo(n)];
 end function;
-
-/*
-import "PATH/package/Geometry/ModSym/twist.m" : TestIsMinimalTwist;
-import "PATH/package/Geometry/ModSym/twist.m" : eigenvalue;
-import "PATH/package/Geometry/ModSym/twist.m" : norms;
-*/
-/*
-Bound := 500;
-N0 := 1; p := 3; e := 4;
-M := CuspidalSubspace(ModularSymbols(N0*p^e, 2, 1));
-Mnfd := NewformDecomposition(NewSubspace(M,p) : Sort:=false); Mnfd;
-SetProfile(true);
-for MM in Mnfd do time IsMinimalTwist(MM, p : Bound:=Bound); end for;
-ProfilePrintByTotalTime(:Max:=20);
-*/

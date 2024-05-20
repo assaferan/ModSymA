@@ -5,7 +5,7 @@ import "arith.m" : SmallestPrimeNondivisor;
 import "../ModFrm/q-expansions.m" : PowerSeriesNormalizeMagma;
 import "linalg.m" : Restrict;
 import "operators.m" : ActionOnModularSymbolsBasis;
-import "qexpansion.m" : EigenvectorModSymSign,
+import "qexpansion.m" : EigenvectorModSymASign,
                                EigenvectorOfMatrixWithCharpoly,
                                QuickIrredTest;
 import "modsym.m" : GetDegeneracyReps,
@@ -21,8 +21,8 @@ function TwistBasis_old(N, prec)
     S := CuspidalSubspace(M);
     // D := NewformDecomposition(S);
     D := Decomposition(S, HeckeBound(S));
-    v1_plus := ChangeRing(EigenvectorModSymSign(D[1], 1), L);
-    v1_minus := ChangeRing(EigenvectorModSymSign(D[1], -1), L);
+    v1_plus := ChangeRing(EigenvectorModSymASign(D[1], 1), L);
+    v1_minus := ChangeRing(EigenvectorModSymASign(D[1], -1), L);
     twist_basis_plus := [];
     twist_basis_minus := [];
     u := [1, 1, 0, 1]; 
@@ -94,7 +94,7 @@ function NewformDecompositionSubspaceMaps2(M, prec)
     printf "Computing eigenvectors...\n";
     for d in D do
 	evs_d := [];
-	v := EigenvectorModSymSign(d,1);
+	v := EigenvectorModSymASign(d,1);
 	f := qEigenform(d, prec);
         K := NormalClosure(BaseRing(v));
         F := Compositum(F, K);
@@ -276,7 +276,7 @@ function TwistBasis(N, prec)
 	Append(~fields, K);
 	KL := Compositum(K,L);
 	R<q> := PowerSeriesRing(KL);
-	v1_plus := EigenvectorModSymSign(d_old, 1);
+	v1_plus := EigenvectorModSymASign(d_old, 1);
 	assert IsIsomorphic(BaseRing(v1_plus), K);
 	v1_plus := ChangeRing(v1_plus, KL);
 	// embed them in the underlying vector space of M

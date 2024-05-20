@@ -7,7 +7,7 @@ freeze;
                                                                             
    FILE: period.m     (rational period maps)   
 
-   $Header: /home/was/magma/packages/ModSym/code/RCS/period.m,v 1.4 2002/09/17 04:57:05 was Exp was $
+   $Header: /home/was/magma/packages/ModSymA/code/RCS/period.m,v 1.4 2002/09/17 04:57:05 was Exp was $
 
    12/09/02: Added IsCuspidal constraints to IntegralMapping.
 
@@ -37,7 +37,7 @@ freeze;
    special case of dimension 0 for "ScaledRationalPeriodMap".
 
    Revision 1.2  2000/06/14 18:18:43  was
-   Added intrinsic DualModularSymbol(M::ModSym) -> Map
+   Added intrinsic DualModularSymbol(M::ModSymA) -> Map
 
    Revision 1.1  2000/05/02 08:08:55  was
    Initial revision
@@ -88,7 +88,7 @@ function ScaledRationalPeriodMap(A)
 end function;
 
 
-intrinsic IntegralMapping(M::ModSym) -> Map
+intrinsic IntegralMapping(M::ModSymA) -> Map
    {A surjective linear map from the ambient space of M to
    a vector space, such that the kernel of this map is the
    same as the kernel of the period mapping.   Note that M must be defined
@@ -119,7 +119,7 @@ function RationalPeriodMapping(A)
 end function;
 
 
-intrinsic RationalMapping(M::ModSym) -> Map
+intrinsic RationalMapping(M::ModSymA) -> Map
    {A surjective linear map from the ambient space of M to
    a vector space, such that the kernel of this map is the
    same as the kernel of the period mapping.}
@@ -131,7 +131,7 @@ intrinsic RationalMapping(M::ModSym) -> Map
 end intrinsic;
 
 
-intrinsic DualModularSymbol(M::ModSym) -> Map
+intrinsic DualModularSymbol(M::ModSymA) -> Map
 {The dual modular symbol associated to M, viewed as a map of Hecke modules 
  M_k ----> M_k/Ker(Phi_M), where the quotient is viewed as 
  an abstract *vector space.*}
@@ -194,7 +194,7 @@ function RationalPeriodConjugation(A)
    return A`RatPeriodConj;
 end function;
 
-intrinsic ModularSymbolEven(M::ModSym, x::RngIntElt) -> ModTupFldElt
+intrinsic ModularSymbolEven(M::ModSymA, x::RngIntElt) -> ModTupFldElt
 {The "even modular symbol phi_M^+", as on page 209 of Mazur, "On the Arithmetic
 of Special Values of L-functions."}
    require Weight(M) eq 2 : "Argument 1 must have weight 2.";
@@ -203,7 +203,7 @@ of Special Values of L-functions."}
    return ModularSymbolEven(M,x*1/1);
 end intrinsic;
 
-intrinsic ModularSymbolEven(M::ModSym, x::FldRatElt) -> ModTupFldElt
+intrinsic ModularSymbolEven(M::ModSymA, x::FldRatElt) -> ModTupFldElt
 {The "even modular symbol phi_M^+", as on page 209 of Mazur, "On the Arithmetic
 of Special Values of L-functions."}
    require Weight(M) eq 2 : "Argument 1 must have weight 2.";
@@ -214,7 +214,7 @@ of Special Values of L-functions."}
    return VectorSpace(A)!Eltseq(z)*ScaledRationalPeriodMap(M);
 end intrinsic;
 
-intrinsic ModularSymbolOdd(M::ModSym, x::RngIntElt) -> ModTupFldElt
+intrinsic ModularSymbolOdd(M::ModSymA, x::RngIntElt) -> ModTupFldElt
 {The "odd modular symbol phi_M^-", as on page 209 of Mazur, "On the Arithmetic
 of Special Values of L-functions."}
    require Weight(M) eq 2 : "Argument 1 must have weight 2.";
@@ -223,7 +223,7 @@ of Special Values of L-functions."}
    return ModularSymbolOdd(M,x*1/1);
 end intrinsic;
 
-intrinsic ModularSymbolOdd(M::ModSym, x::FldRatElt) -> ModTupFldElt
+intrinsic ModularSymbolOdd(M::ModSymA, x::FldRatElt) -> ModTupFldElt
 {The "odd modular symbol phi_M^-", as on page 209 of Mazur, "On the Arithmetic
 of Special Values of L-functions."}
    require Weight(M) eq 2 : "Argument 1 must have weight 2.";

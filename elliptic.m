@@ -127,14 +127,14 @@ function ellinv_c4c6(w1, w2)
    return c4, c6;
 end function;
 
-intrinsic EllipticPeriods(A::ModSym)
+intrinsic EllipticPeriods(A::ModSymA)
                     -> FldComElt, FldComElt
 {The standard elliptic periods w1 and w2, computed to precision n.}
   return EllipticPeriods(A, DefaultPrecision(A));
 end intrinsic;
 
 
-intrinsic EllipticPeriods(A::ModSym, n::RngIntElt) -> FldComElt, FldComElt
+intrinsic EllipticPeriods(A::ModSymA, n::RngIntElt) -> FldComElt, FldComElt
 {"} // "
    L           := Periods(A,n);
    tau, w1, w2 := ellinv_NormalizePair(L[1][1], L[2][1]);
@@ -142,7 +142,7 @@ intrinsic EllipticPeriods(A::ModSym, n::RngIntElt) -> FldComElt, FldComElt
 end intrinsic;
 
 
-intrinsic EllipticInvariants(A::ModSym)
+intrinsic EllipticInvariants(A::ModSymA)
                     -> FldComElt, FldComElt, FldComElt, CrvEll
 {The invariants c4, c6, and j, and an elliptic curve E over C with
 those invariants, computed using precision n terms of q-expansion.}
@@ -150,7 +150,7 @@ those invariants, computed using precision n terms of q-expansion.}
 end intrinsic;
 
 
-intrinsic EllipticInvariants(A::ModSym, n::RngIntElt) 
+intrinsic EllipticInvariants(A::ModSymA, n::RngIntElt) 
       -> FldComElt, FldComElt, FldComElt, CrvEll
 {"} // "
    require DimensionComplexTorus(A) eq 1 : "Torus of argument 1 must have dimension 1.";
@@ -175,7 +175,7 @@ function Elliptic_ap(E, p)
 end function;
 
 
-intrinsic EllipticCurve(M::ModSym : 
+intrinsic EllipticCurve(M::ModSymA : 
                          StartPrec := -1,
                          Database := true ) -> SeqEnum
 {An elliptic curve over the rational numbers that lies in the isogeny 
@@ -337,7 +337,7 @@ intrinsic EllipticCurve(M::ModSym :
    end while;
 end intrinsic;
 
-intrinsic ModularSymbolsModSmallPrime(E::CrvEll, ell::RngIntElt) -> ModSym
+intrinsic ModularSymbolsModSmallPrime(E::CrvEll, ell::RngIntElt) -> ModSymA
 {The space of mod ell modular symbols associated to E, 
  where ell should be a very small prime.}
 

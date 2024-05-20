@@ -46,7 +46,7 @@ freeze;
 if assigned SmallestPrimeNondivisor then
    delete SmallestPrimeNondivisor;
 end if;
-import "./ModSym/arith.m" : SmallestPrimeNondivisor;
+import "./ModSymA/arith.m" : SmallestPrimeNondivisor;
 
 function my_idxG0(n)
    return 
@@ -545,7 +545,7 @@ function action_on_mod_sym(N)
   D := NewformDecomposition(S);
   G := SL(2, Integers(N));
   gens := [Eltseq(FindLiftToSL2(x)): x in Generators(G)];
-  import "./Geometry/ModSym/operators.m" : ActionOnModularSymbolsBasis;
+  import "./Geometry/ModSymA/operators.m" : ActionOnModularSymbolsBasis;
   actions := [ActionOnModularSymbolsBasis(g, M) : g in gens];
   F := CyclotomicField(7);
   S_action := [ChangeRing(Restrict(a, VectorSpace(S)),F) : a in actions];

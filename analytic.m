@@ -7,7 +7,7 @@ freeze;
                                                                             
    FILE: analytic.m  (Computations involving approx. period lattice)        
   
-   $Header: /home/was/magma/packages/ModSym/code/RCS/analytic.m,v 1.7 2002/10/01 06:01:53 was Exp $
+   $Header: /home/was/magma/packages/ModSymA/code/RCS/analytic.m,v 1.7 2002/10/01 06:01:53 was Exp $
 
    $Log: analytic.m,v $
    Revision 1,8  2020/09/07 11:18:04  was
@@ -322,7 +322,7 @@ end function;
 
 
 function SlowPeriodIntegral(A, f, Pg : sigma := 1)
-/* A::ModSym,  f::RngSerPowElt, Pg::Tup) -> FldComElt
+/* A::ModSymA,  f::RngSerPowElt, Pg::Tup) -> FldComElt
  Given a homogeneous polynomial P(X,Y) of degree k-2, 
  a 2x2 matrix g=[a,b,c,d], and a q-expansion f of a weight k
  modular form, this function returns the period
@@ -566,7 +566,7 @@ function PeriodGenerators(A, fast)
    return A`PeriodGens, A`PGfast;
 end function;
 
-intrinsic PeriodMapping(A::ModSym, Q::SeqEnum[RngSerPowElt] : 
+intrinsic PeriodMapping(A::ModSymA, Q::SeqEnum[RngSerPowElt] : 
 			sigma := 1, prec := 30) -> Map
 {The complex period mapping, computed using n terms of q-expansion.  
  The period map is a homomorphism M --> C^d, where d = #Q.}
@@ -613,7 +613,7 @@ end intrinsic;
  
 
 
-intrinsic PeriodMapping(A::ModSym, prec::RngIntElt) -> Map
+intrinsic PeriodMapping(A::ModSymA, prec::RngIntElt) -> Map
 {The complex period mapping, computed using n terms of q-expansion.  
  The period map is a homomorphism M --> C^d, where d is the
  dimension of A.}
@@ -704,7 +704,7 @@ intrinsic PeriodMapping(A::ModSym, prec::RngIntElt) -> Map
 end intrinsic;
 
 
-intrinsic Periods(M::ModSym, n::RngIntElt) -> SeqEnum
+intrinsic Periods(M::ModSymA, n::RngIntElt) -> SeqEnum
 {The complex period lattice associated to A using n terms of the q-expansions.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
    require IsCuspidal(M) : "Argument 1 must be cuspidal.";
@@ -741,7 +741,7 @@ intrinsic Periods(M::ModSym, n::RngIntElt) -> SeqEnum
 end intrinsic;
 
 
-intrinsic RealVolume(M::ModSym) -> FldReElt
+intrinsic RealVolume(M::ModSymA) -> FldReElt
 {The volume vol(A_M(R)) of the real points of the abelian variety 
 attached to M.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -750,7 +750,7 @@ attached to M.}
 end intrinsic;
 
 
-intrinsic RealVolume(M::ModSym, n::RngIntElt) -> FldReElt
+intrinsic RealVolume(M::ModSymA, n::RngIntElt) -> FldReElt
 {The volume vol(A_M(R)) of the real points of the abelian variety 
 attached to M.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -771,7 +771,7 @@ attached to M.}
 end intrinsic;
 
 
-intrinsic MinusVolume(M::ModSym) -> FldReElt
+intrinsic MinusVolume(M::ModSymA) -> FldReElt
 {The volume vol(A_M(C)^-) of the points on A_M(C) that are
  in the -1 eigenspace for complex conjugation.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -781,7 +781,7 @@ intrinsic MinusVolume(M::ModSym) -> FldReElt
 end intrinsic;
 
 
-intrinsic MinusVolume(M::ModSym, n::RngIntElt) -> FldReElt
+intrinsic MinusVolume(M::ModSymA, n::RngIntElt) -> FldReElt
 {The volume vol(A_M(C)^-) of the points on A_M(C) that are
  in the -1 eigenspace for complex conjugation.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -820,7 +820,7 @@ function PolyOverCyclo_to_PolyOverQ(R)
    return phi;
 end function;
 
-intrinsic LSeries(M::ModSym, j::RngIntElt, n::RngIntElt)
+intrinsic LSeries(M::ModSymA, j::RngIntElt, n::RngIntElt)
                                            -> FldComElt
 {The value L(M,j), where j is a critical integer, i.e., one of
  the integers 1,2,...,k-1.  Series are computed to precision n.
@@ -911,7 +911,7 @@ intrinsic LSeries(M::ModSym, j::RngIntElt, n::RngIntElt)
 end intrinsic;
 
 
-intrinsic ClassicalPeriod(M::ModSym, j::RngIntElt) 
+intrinsic ClassicalPeriod(M::ModSymA, j::RngIntElt) 
        -> FldComElt
 {The number r_j(f) = int_\{0\}^\{ioo\} f(z) z^j dz.}
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -929,7 +929,7 @@ intrinsic ClassicalPeriod(M::ModSym, j::RngIntElt)
 end intrinsic;
 
 
-intrinsic ClassicalPeriod(M::ModSym, j::RngIntElt, n::RngIntElt) 
+intrinsic ClassicalPeriod(M::ModSymA, j::RngIntElt, n::RngIntElt) 
        -> FldComElt
 {"} // "
    require Sign(M) eq 0 : "Argument 1 must have sign 0.";
@@ -949,7 +949,7 @@ intrinsic ClassicalPeriod(M::ModSym, j::RngIntElt, n::RngIntElt)
 end intrinsic;
 
 
-intrinsic MinusTamagawaNumber(M::ModSym) -> RngIntElt
+intrinsic MinusTamagawaNumber(M::ModSymA) -> RngIntElt
 {The number of connected components of the subgroup of
 the complex torus A_M(C) that are acted on as -1 by complex
 conjugation.}
@@ -964,7 +964,7 @@ conjugation.}
 end intrinsic;
 
 
-intrinsic RealTamagawaNumber(M::ModSym) -> RngIntElt
+intrinsic RealTamagawaNumber(M::ModSymA) -> RngIntElt
 {The number of real components of the complex torus
 A_M associated to M.}
    require IsCuspidal(M) : "Argument 1 must be cuspidal.";

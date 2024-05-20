@@ -71,13 +71,13 @@ forward GeneratingSTprods,
         Intersect_modsym_HR_ptesI,
         Intersect_modsym_STprod,
         MatrixToWord,
-        ModSymPivots,
+        ModSymAPivots,
         Validate_modsym,
         Validate_modsymspace,
         Validate_STprod;
 
 
-intrinsic IntersectionPairing(x::ModSymElt, y::ModSymElt) -> FldRatElt
+intrinsic IntersectionPairing(x::ModSymAElt, y::ModSymAElt) -> FldRatElt
    {The intersection pairing (x,y) of the homology classes corresponding
    to the weight-2 cuspidal modular symbols x and y.}
 
@@ -97,7 +97,7 @@ intrinsic IntersectionPairing(x::ModSymElt, y::ModSymElt) -> FldRatElt
 
 end intrinsic;
 
-intrinsic IntersectionPairing(M::ModSym) -> AlgMatElt
+intrinsic IntersectionPairing(M::ModSymA) -> AlgMatElt
 {Matrix of intersection pairing with respect to the basis of M.}
    require IsCuspidal(M) : "Argument 1 must be cuspidal.";
    require Type(BaseField(M)) eq FldRat : "Argument 1 must be over the rational field.";
@@ -151,7 +151,7 @@ end function;
 ////////// validation code ////////////////////////////////////
 
 procedure Validate_modsymspace(M)
-   assert Type(M) eq ModSym;
+   assert Type(M) eq ModSymA;
    assert Sign(M) eq 0;
    k := Weight(M);
    F := BaseField(M);
@@ -163,7 +163,7 @@ end procedure;
 
 
 procedure Validate_modsym(x)
-   assert Type(x) eq ModSymElt;
+   assert Type(x) eq ModSymAElt;
    M := Parent(x);
    Validate_modsymspace(M);
 end procedure;
@@ -185,7 +185,7 @@ function Coset(g, p1)
 end function;
 
 function Intersect_modsym_HR_ptesI(x,y,p1)
-   // x is supposed to be a Manin symbol, as output by ManinSymbol(ModSym).
+   // x is supposed to be a Manin symbol, as output by ManinSymbol(ModSymA).
    // y is an element of HR_ptesI
    // p1 = P1List.
    // There is no error checking for efficiency sake. 
@@ -351,10 +351,10 @@ end function;
 // element of X as a *column* of a matrix.  Then the columns 
 // in which the pivots of the reduced *row*-echelon form of 
 // the matrix are the generators. 
-function ModSymPivots(X)
+function ModSymAPivots(X)
    assert Type(X) eq SeqEnum;
    assert #X gt 0;
-   assert Type(X[1]) eq ModSymElt;
+   assert Type(X[1]) eq ModSymAElt;
    M := Parent(X[1]);
    Validate_modsymspace(M);
    V := VectorSpace(M);   

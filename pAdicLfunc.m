@@ -57,7 +57,7 @@ function eval_ms(E,r : s:=1,M:=0,T:=0,D:=1) r:=Rationals()!r;
  if D ne 1 then
   return Sign(D)*&+[KroneckerSymbol(D,u)*eval_ms(E,r+u/D:s:=s,M:=M,T:=T) :
 		    u in [1..Abs(D)] | Gcd(u,D) eq 1]; end if;
- if Type(M) ne ModSym then M:=ModularSymbols(E,s);
+ if Type(M) ne ModSymA then M:=ModularSymbols(E,s);
   T:=Transpose(Matrix(Basis(DualRepresentation(M)))); end if;
  r:=Rationals()!r; r:=r-Round(r);
  v1:=Vector(Eltseq(Parent(M.1)!<1,[r,Infinity()]>))*T;

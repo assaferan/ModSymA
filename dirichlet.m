@@ -93,7 +93,7 @@ freeze;
 
    10/31/02: I'm sick of RCS.  I'm not using it anymore.
 
-   $Header: /home/was/magma/packages/ModSym/code/RCS/dirichlet.m,v 1.17 2002/09/27 19:36:16 was Exp was $ 
+   $Header: /home/was/magma/packages/ModSymA/code/RCS/dirichlet.m,v 1.17 2002/09/27 19:36:16 was Exp was $ 
    $Log: dirichlet.m,v $
    Revision 1.17  2002/09/27 19:36:16  was
    finished fixing my fix.

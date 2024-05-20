@@ -243,20 +243,20 @@ function ComputeSpecialValueAndRankWt2(A,n)
 end function;
 
 
-/*intrinsic LSeriesLeadingCoefficient(A::ModSym) -> FldComElt
+/*intrinsic LSeriesLeadingCoefficient(A::ModSymA) -> FldComElt
 {}
    return LSeriesLeadingCoefficient(A,1,DefaultPrec(A));
 end intrinsic;
 
 
-intrinsic LSeriesLeadingCoefficient(A::ModSym, n::RngIntElt) -> FldComElt
+intrinsic LSeriesLeadingCoefficient(A::ModSymA, n::RngIntElt) -> FldComElt
 {}
    return LSeriesLeadingCoefficient(A,1,n);
 end intrinsic;
 */
 
 
-intrinsic LSeriesLeadingCoefficient(M::ModSym, j::RngIntElt, 
+intrinsic LSeriesLeadingCoefficient(M::ModSymA, j::RngIntElt, 
                                     prec::RngIntElt) -> FldComElt, RngIntElt
 {The leading coefficient of Taylor expansion about the critical
  point j and the order of vanishing of L(M,s) at s=j.}

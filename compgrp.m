@@ -50,7 +50,7 @@ freeze;
    Revision 1.8  2000/06/12 16:49:02  was
    Added a new intrinsic!
 
-     intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSym, p::RngIntElt)
+     intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSymA, p::RngIntElt)
       -> RngIntElt
      {Compute the order of the image of the component group of J_0(N)
        in the component group of A, all at p.}
@@ -103,7 +103,7 @@ freeze;
    Added Revision 1.8  2000/06/12 16:49:02  was
    Added Added a new intrinsic!
    Added
-   Added   intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSym, p::RngIntElt)
+   Added   intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSymA, p::RngIntElt)
    Added    -> RngIntElt
    Added   {Compute the order of the image of the component group of J_0(N)
    Added     in the component group of A, all at p.}
@@ -147,7 +147,7 @@ forward
    XGroup,
    XGroup_p,
    XGroup_M,
-   XGroup_of_ModSym,
+   XGroup_of_ModSymA,
    XGroupV,
    XModularDegree;
 
@@ -159,7 +159,7 @@ forward
  * Jacobians".  and Kohel-Stein                                 *
  ****************************************************************/
 
-intrinsic ComponentGroupOrder(M::ModSym, p::RngIntElt) -> RngIntElt
+intrinsic ComponentGroupOrder(M::ModSymA, p::RngIntElt) -> RngIntElt
 {The order of the component group at p.  This is the
 order of the group of Fpbar-points of the component 
 group of the reduction modulo p of the Neron model of the abelian
@@ -202,7 +202,7 @@ then only the odd part of the order is returned.}
 end intrinsic;
 
 
-intrinsic TamagawaNumber(M::ModSym, p::RngIntElt) -> RngIntElt
+intrinsic TamagawaNumber(M::ModSymA, p::RngIntElt) -> RngIntElt
 {The order of the group of Fp rational points of
  the component group of M.}
 //  WARNING: I (Stein) have not yet nailed down the power 
@@ -366,7 +366,7 @@ function XDimension(X)
 end function;
 
 
-function XGroup_of_ModSym(M, p)
+function XGroup_of_ModSymA(M, p)
 /*{Returns the character group of the toric part of the
     closed fiber at p of the space M of modular symbols.
     This only makes sense when p exactly divides the level
@@ -396,7 +396,7 @@ function XGroupV(A, p)
       A`X := SequenceToList([0 : j in [1..#Factorization(Level(A))]]);
    end if;
    if Type(A`X[i]) eq RngIntElt then
-      Z := XGroup_of_ModSym(AmbientSpace(A),p);
+      Z := XGroup_of_ModSymA(AmbientSpace(A),p);
       A`X[i] := RSpace(Integers(),XDimension(Z));
       d := DimensionComplexTorus(A);
       p := 2; 
@@ -414,7 +414,7 @@ function XGroupV(A, p)
    return A`X[i];
 end function;
 
-intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSym, p::RngIntElt) -> RngIntElt
+intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSymA, p::RngIntElt) -> RngIntElt
 {Compute the order of the image of the component group of J_0(N) 
  in the component group of A, all at p.}
 
@@ -430,7 +430,7 @@ intrinsic OrderOfImageOfComponentGroupOfJ0N(A::ModSym, p::RngIntElt) -> RngIntEl
 
 end intrinsic;
 
-intrinsic ImageOfComponentGroupOfJ0N(A::ModSym, p::RngIntElt) -> GrpAb, Map, Map
+intrinsic ImageOfComponentGroupOfJ0N(A::ModSymA, p::RngIntElt) -> GrpAb, Map, Map
 {The image Phi of the component group of J_0(N) at p in the component 
 group of A at p, the natural map from F=Hom(X[I_A],Z) to Phi, and a map
 that send an integer n to a matrix that gives the Hecke operator T_n on F 
@@ -451,7 +451,7 @@ with respect to Basis(F).}
       if false and IsPrime(Level(A)) then  // can use the much faster Mestre module -- AND Emerton's theorem.
          error "Not programmed.";
       else
-         X := XGroup_of_ModSym(AmbientSpace(A),p);
+         X := XGroup_of_ModSymA(AmbientSpace(A),p);
          V := XGroupV(A,p);
          dummy := HeckeOperator_brandt(X,2);  // so that TM is defined. 
 
@@ -490,7 +490,7 @@ function PhiX(A, p)
       if IsPrime(Level(A)) then  // can use the much faster Mestre module.
          x, y := PhiX_and_mX(MestreGroup(AmbientSpace(A)),MestreGroupV(A));
       else
-         x, y := PhiX_and_mX_brandt(XGroup_of_ModSym(AmbientSpace(A),p), XGroupV(A,p));        
+         x, y := PhiX_and_mX_brandt(XGroup_of_ModSymA(AmbientSpace(A),p), XGroupV(A,p));        
       end if;
       A`xdata[i] := [x,y];
    end if;

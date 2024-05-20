@@ -9,7 +9,7 @@ freeze;
 
    05/02/03: Massively optimized PrimitiveEisensteinSeries for level 1. -- WAS
                                                                             
-   $Header: /home/was/magma/packages/ModSym/code/RCS/eisenstein.m,v 1.3 2002/09/25 19:01:43 was Exp was $
+   $Header: /home/was/magma/packages/ModSymA/code/RCS/eisenstein.m,v 1.3 2002/09/25 19:01:43 was Exp was $
 
    $Log: eisenstein.m,v $
    Revision 1.3  2002/09/25 19:01:43  was
