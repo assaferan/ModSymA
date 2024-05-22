@@ -624,7 +624,7 @@ function NewNewSubspaceSub(M, primes : ComputeDual:=true)
          end for;
       else
 	 for i in [1..#old] do
-            eps_res := DirichletCharacter(old[i]);
+            // eps_res := DirichletCharacter(old[i]);
             if Dimension(old[i]) gt 0 then
               for alpha in alphas[i] do
 		Append(~DDmats, Transpose(DegeneracyMatrix(old[i], AM, alpha)));
@@ -637,6 +637,7 @@ function NewNewSubspaceSub(M, primes : ComputeDual:=true)
       vprintf ModularSymbols: "Computing kernel of dual degeneracy maps: ";
       vtime ModularSymbols:
       KDD := Kernel(DD);
+      assert Dimension(KDD) eq Dimension(KD);
       AMnew`dual_representation := KDD;
       /*
       vprintf ModularSymbols: "Intersecting kernel with dual space: ";
