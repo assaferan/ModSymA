@@ -701,7 +701,9 @@ function GetModSymAPrimes(M)
     return primes;
 end function;
 
-intrinsic NewSubspace(M::ModSymA : ComputeDual:=true) -> ModSymA
+// Until we figure out what is wrong with the trace map in DegeneracyMatrix,
+// we do not use it to compute the dual.
+intrinsic NewSubspace(M::ModSymA : ComputeDual:=false) -> ModSymA
 {The new subspace of the cuspidal modular symbols space M.   
 This is the intersection of NewSubspace(M,p) as p varies 
 over all prime divisors of the level of M}
