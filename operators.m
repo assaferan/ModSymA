@@ -700,6 +700,13 @@ function HeckeGeneralCaseRepresentativesDoubleCoset2(G, alpha)
   
 end function;
 
+intrinsic HeckeOperator(M::ModSymA, alpha::GrpMatElt[FldRat]) -> AlgMatElt
+{Return the Hecke operator corresponding to the double coset of alpha.}
+  G := LevelSubgroup(M);
+  R := HeckeGeneralCaseRepresentativesDoubleCoset2(G, alpha);
+  return &+[ActionOnModularSymbolsBasis(g,M) : g in R]; 
+end intrinsic;
+
 function HeckeNSCartanRepresentatives(G,p,plus)
   if (not IsPrime(Level(G))) or Level(G) eq p then
       error "Not implemented for composite level!";
