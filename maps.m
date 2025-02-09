@@ -554,6 +554,7 @@ elif G2 subset G1 then// G2 subset G1 -- raise level
       A := [Representation(ConvFromModularSymbol(M2,RB[i])) 
             : i in [1..#RB]];
   else
+      // require false : "Not implemented for spaces with character!";
       A   := [ &+[eps_vals[j]*
                   Representation(ConvFromModularSymbol(M2,
 						       ModularSymbolApply(R[j], B[i]))) :
