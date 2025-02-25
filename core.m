@@ -139,7 +139,9 @@ import "linalg.m" : Pivots;
 
 import "multichar.m" : MC_ConvToModularSymbol, 
                        MC_ManinSymToBasis,
-                       MC_ModSymAToBasis;;
+                       MC_ModSymAToBasis;
+
+import "operators.m" : Get_Tquot;
 
 /* ZZ Dangerous bend ZZ
    The code in this files lies at the very core of all of the other modular
@@ -200,7 +202,8 @@ CQuotient := recformat<
                   //   out the S-quotient by the T-relations. 
        Tquot,     // * The i-th Sgen is equal to Tquot[i], which
                   //   is a vector on Tgens. 
-       Tquot_scaled, scalar	// Scaled version over rationals
+       Tquot_scaled, scalar,	// Scaled version over rationals
+       Tquot_mixed // mixed dense/sparse
 >;
 
 // The standard manin symbols list.
@@ -1427,16 +1430,89 @@ end function;
 
 function ManSymGenListToRep(M,m) 
    quot := AmbientSpace(M)`quot;
-   Scoef := quot`Scoef;
    Tquot := quot`Tquot;
+
    if IsEmpty(Tquot) then
       return M!0;
    end if;
+
+   Scoef := quot`Scoef;
    Squot := quot`Squot;
+
+   c := [t[1]*Scoef[t[2]]: t in m];
+   m1 := [Squot[t[2]]: t in m];
+
+   if #m1 gt 2 and m1[1] eq m1[2] then
+      s := c[1] + c[2];
+      r := [3 .. #m];
+      if IsZero(s) then
+	 c := c[r];
+	 m1 := m1[r];
+      else
+         c := [s] cat c[r];
+         m1 := [m1[1]] cat m1[r];
+      end if;
+      cind := [i: i in [1 .. #c] | not IsZero(c[i])];
+      c := c[cind];
+      m1 := m1[cind];
+   end if;
+
+   if 1 eq 1 then
+       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+       A := AmbientSpace(M);
+       A`quot := quot;
+//"USE MIX:", assigned quot`Tquot_mixed;
+       if Type(Tquot) eq Tup then
+	 //"USE MIX";
+	 //"Tquot:", Tquot;
+	 map, X, S, V := Explode(Tquot);
+	 //"X:", Parent(X); "S:", S;
+
+	 m2 := [map[i]: i in m1];
+	 sind := [i: i in [1.. #m2] | m2[i] lt 0];
+	 dind := [i: i in [1.. #m2] | m2[i] gt 0];
+	 sv := Vector(c[sind]);
+	 dv := Vector(c[dind]);
+
+//"Squot:", Squot;
+//"Scoef:", Scoef;
+/*
+"m:", m;
+"m1:", m1;
+"m2:", m2;
+"c:", c;
+"sind:", sind;
+"dind:", dind;
+"sv:", sv;
+"dv:", dv;
+*/
+
+	 dv := dv*RowSubmatrix(X, m2[dind]);
+	 sv := sv*RowSubmatrix(S, [-i: i in m2[sind]]);
+
+	 ans0 := dv + sv;
+
+      return ans0;
+
+Tquot := quot`Tquot;
+       end if;
+   end if;
+
+   if IsEmpty(Tquot) then
+      return M!0;
+   end if;
    ans := Universe(Tquot)!0;
+   /*
    for t in m do 
       ans +:= t[1]*Scoef[t[2]]*Tquot[Squot[t[2]]];
    end for;
+   */
+   for i := 1 to #c do
+      ans +:= c[i]*Tquot[m1[i]];
+   end for;
+//"ans w:", Weight(ans);
+//assert ans eq ans0;
+
    return ans;
 end function;
 

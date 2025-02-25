@@ -212,7 +212,8 @@ end function;
 
 function ReduceCusp(a)
    d := Gcd(a);
-   return [Integers()|x/d : x in a];
+   //return [Integers()|x/d : x in a];
+   return [Integers()|ExactQuotient(x, d): x in a];
 end function;
 
 // This function builds a table mapping from the indices of coset

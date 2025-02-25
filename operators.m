@@ -1078,6 +1078,44 @@ procedure Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action)
 
    Tquot := quot`Tquot;
 
+//printf "Get_Tquot: #Tquot: %o, width: %o, dist: %o\n",
+//    #Tquot, Ncols(Tquot[1]), {* Weight(v): v in Tquot *};
+
+   if 1 eq 1 then
+	RATIO := 0.3;
+//"Here quot:"; TES(quot);
+	if assigned quot`Tquot_mixed then
+//"REUSE MIXED";
+	    Tquot := quot`Tquot_mixed;
+	else
+	    l := #Tquot;
+	    V := Universe(Tquot);
+	    n := Degree(V);
+	    rw := [Weight(v): v in Tquot];
+	    limit := RATIO*n;
+	    map := [];
+	    dl := [];
+	    sl := [];
+	    for i := 1 to l do
+		w := Weight(Tquot[i]);
+		if w ge limit then
+		    Append(~dl, i);
+		    Append(~map, #dl);
+		else
+		    Append(~sl, i);
+		    Append(~map, -#sl);
+		end if;
+	    end for;
+	    X := Matrix(Tquot[dl]);
+	    S := SparseMatrix(Matrix(Tquot[sl]));
+	    Tquot := <map, X, S, V>;
+//"Mixed Tquot:", Tquot;
+//printf "Mixed Tquot: n: %o, l: %o, X: %o by %o (d %.3o), sp: %o (d %.3o)\n",
+//    n, l, Nrows(X), Ncols(X), Density(X), S, Density(S);
+	    quot`Tquot_mixed := Tquot;
+	end if;
+   end if;
+
    CallP1Action2 := P1Action;
    CallP1Action := P1Action;
 
@@ -1209,12 +1247,13 @@ end function;
 
 
 
-function lev1_TnSparse(M, Heil, sparsevec)
+function lev1_TnSparse(M, Heil, sparsevec: Singletons := false)
    assert Type(M) eq ModSymA;
    assert Type(Heil) in {RngIntElt, Tup};
    assert Type(sparsevec) eq SeqEnum;
 
    if Dimension(M) eq 0 then
+      assert not Singletons;
       return VectorSpace(M)!0;
    end if;
 
@@ -1265,6 +1304,36 @@ function lev1_TnSparse(M, Heil, sparsevec)
 
    R := PolynomialRing(BaseField(M)); x := R.1;
    if IsOfGammaType(M) then
+       call_action := func<i |
+	  P1GeneralizedWeightedAction(
+	    generating_coset_list[i], generating_weights[i],
+	    k, coset_list, Tquot, my_phi, my_coeff, modNHeil, char0Heil,
+	    eps, R, 1)
+       >;
+   else
+     // phiG := get_phi(LevelSubgroup(M));
+     G := LevelSubgroup(M);
+     call_action := func<i |
+         lev1_ManinSymbolsGeneralizedWeightedAction(
+	    generating_coset_list[i],
+	    generating_weights[i],
+	    k, coset_list, Tquot,
+	    my_phi, my_coeff,
+	    modNHeil, char0Heil,
+	    eps,
+	    R,
+	    1, G)
+	>;
+   end if;
+
+   if Singletons then
+       ans := [call_action(i): i in sparsevec];
+   else
+       ans := &+[m[1] * call_action(m[2]): m in sparsevec];
+   end if;
+
+/*
+   if IsOfGammaType(M) then
      ans :=  &+[ m[1]* P1GeneralizedWeightedAction(generating_coset_list[m[2]],
                                generating_weights[m[2]],
                                k, coset_list, Tquot,
@@ -1288,6 +1357,7 @@ function lev1_TnSparse(M, Heil, sparsevec)
 			       1, G) :
                 m in sparsevec];
    end if;
+*/
 
    if GetVerbose("ModularSymbols") eq 3 then
       printf " (%o s).\n", Cputime(t);
@@ -1341,6 +1411,7 @@ function HeckeOperatorHeilbronn(M, Heil)
 
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+      M`quot := quot;
       defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
    else
       Tquot := quot`Tquot;
@@ -1374,10 +1445,14 @@ function HeckeOperatorHeilbronn(M, Heil)
 end function;
 
 
-function TnSparse(M, Heil, sparsevec)
+function TnSparse(M, Heil, sparsevec: Singletons := false)
 
    if #sparsevec eq 0 then
-      return VectorSpace(M)!0;
+      V := VectorSpace(M);
+      if Singletons then
+	return [V |];
+      end if;
+      return V!0;
    end if;
 
 /* This now returns for the case not of Gamma type!
@@ -1426,10 +1501,11 @@ function TnSparse(M, Heil, sparsevec)
 
    // Now consider the characteristic-zero case.
    if Level(M) eq 1 then
-      return lev1_TnSparse(M,Heil,sparsevec);
+      return lev1_TnSparse(M,Heil,sparsevec: Singletons := Singletons);
    end if;
 
    if Dimension(M) eq 0 then
+      assert not Singletons;
       return VectorSpace(M)!0;
    end if;
 
@@ -1479,6 +1555,7 @@ function TnSparse(M, Heil, sparsevec)
 
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+      M`quot := quot;
       defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
    else
       Tquot := quot`Tquot;
@@ -1929,8 +2006,9 @@ transpose of HeckeOperator(M,n).}
                               | M`dual_hecke_operator[i][1] eq n } then
       return M`dual_hecke_operator[i][2];
    end if;
-   vprintf ModularSymbols : "Computing T_%o on dual space of dimension %o.\n",
+   vprintf ModularSymbols: "Computing T_%o on dual space of dimension %o.\n",
                           n, Dimension(M);
+   vtime ModularSymbols:
    if n eq 1 then
 
       T := MatrixAlgebra(BaseField(M),Dimension(M))!1;

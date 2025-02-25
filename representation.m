@@ -489,9 +489,18 @@ the lattice to M.}
             Q    := M`quot;
             gens := [ Q`Scoef[i]*Q`Tquot[Q`Squot[i]] : i in [1..#Q`Squot] ];
             if Type(BaseField(M)) eq FldRat then
-            n    := #Q`Tgens;
-               gens := [g[i] :  i in [1..n], g in gens];
-               L := Lattice(n,gens);
+                n := #Q`Tgens;
+                gens := [g[i] :  i in [1..n], g in gens];
+		if 1 eq 1 then
+		    // Much faster to avoid slow over-determined LLL call
+		    gens := Matrix(n,gens);
+		    gens, d := IntegralMatrix(gens);
+		    gens := BasisMatrix(Rowspace(gens));
+		    gens := (1/d)*Matrix(RationalField(), gens);
+		    L := Lattice(gens);
+		else
+		    L := Lattice(n, gens);
+		end if;
             else
                B := Basis(BaseField(M));
                gens := [RestrictionOfScalars(b*g) : g in gens, b in B];
