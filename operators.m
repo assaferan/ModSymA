@@ -907,9 +907,25 @@ function GetBadDoubleCosetRepresentatives(G,p)
     return final_list;
 end function;
 
+declare attributes GrpGL2Hat: HeckeGCR;
 
 function HeckeGeneralCaseRepresentatives(G,p : Squared := false)
   N := Level(G);
+
+// "CALl HeckeGeneralCaseRepresentatives:"; G; TES(G); "p:", p; 
+
+  if assigned G`HeckeGCR then
+       A := G`HeckeGCR;
+       if IsDefined(A, p) then
+//"REUSE HeckeGCR";
+	   return A[p];
+       end if;
+       delete G`HeckeGCR;
+  else
+       A := AssociativeArray();
+  end if;
+
+
   GL2Q := GL(2, Rationals());
   if N mod p eq 0 then
       alphas := GetBadDoubleCosetRepresentatives(G,p);
@@ -923,6 +939,10 @@ function HeckeGeneralCaseRepresentatives(G,p : Squared := false)
   end if;
   R := &cat [HeckeGeneralCaseRepresentativesDoubleCoset2(G, GL2Q!Eltseq(alpha))
 							: alpha in alphas];
+
+  A[p] := R;
+  G`HeckeGCR := A;
+
   return R;
 end function;
 
@@ -1026,6 +1046,13 @@ function HeckeOperatorDirectlyOnModularSymbols(M,p : Squared := false)
 end function;
 
 function ManinSymbolsAction2(defining_tuple, uv, Heil)
+/*
+"*** ManinSymbolsAction2";
+"defining_tuple:", defining_tuple; Parent(defining_tuple);
+"uv:", uv; Parent(uv);
+"Heil:", Heil; Parent(Heil);
+*/
+
   G := defining_tuple[1];
   det := defining_tuple[2];
   Tquot := defining_tuple[3];
@@ -1034,6 +1061,7 @@ function ManinSymbolsAction2(defining_tuple, uv, Heil)
   eps := defining_tuple[6];
   res := Universe(Tquot)!0;
   phi, phi_data := get_phi(G, det);
+//"phi:", phi; "phi_data:", phi_data;
   for mat in Heil do
     uvM := Parent(mat)!Eltseq(uv) * mat;
     ind, s := phi(uvM, phi_data);
@@ -1327,7 +1355,7 @@ function lev1_TnSparse(M, Heil, sparsevec: Singletons := false)
    end if;
 
    if Singletons then
-       ans := [call_action(i): i in sparsevec];
+       ans := &+[call_action(i): i in sparsevec];
    else
        ans := &+[m[1] * call_action(m[2]): m in sparsevec];
    end if;

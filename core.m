@@ -418,7 +418,17 @@ end function;
 function ManinSymbolGenList(k,G,F)
    // coset_list := [c : c in Codomain(Components(G`FindCoset)[1])];
    // find_coset := G`FindCoset;
-   find_coset := GetFindCoset(G);
+   find_coset, find_cosetq := GetFindCoset(G);
+
+/*
+"ManinSymbolGenList find_coset:", find_coset;
+comp := (Components(find_coset)[1]);
+"comp:", comp;
+"NEW TES:"; TES(comp);
+"codom:", Codomain(comp);
+"NEW G TES:"; TES(G);
+*/
+
    coset_list := [c : c in Codomain(Components(find_coset)[1])];
    n      := (k-1)*#coset_list;
    R<X,Y> := PolynomialRing(F,2);
@@ -427,7 +437,7 @@ function ManinSymbolGenList(k,G,F)
       F      := F,            // base field
       R      := R,            // polynomial ring F[X,Y]
       coset_list := coset_list,
-      find_coset := find_coset,
+      find_coset := find_cosetq,
       n      := n             
    >;
 end function;
@@ -1819,15 +1829,23 @@ end function;
 
 function get_general_phi(G)
   function phi(mat, G)
+//IndentPush(); "*** phi:";
      det := Determinant(mat);
+//"mat:", mat; "det:", det;
      if det notin Domain(G`DetRep) then return 0,0; end if;
      det_rep := G`DetRep(det);
-// mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
-     mat_sl2 := ModLevel(G)!(det_rep * mat * ScalarMatrix(2,det)^(-1));
-     ind, s := CosetReduce(mat_sl2, G`FindCoset);
+//"det_rep:", det_rep; Parent(det_rep);
+	    // mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
+     prod := (det_rep * mat * ScalarMatrix(2,det)^(-1));
+//"prod:", prod;
+     mat_sl2 := ModLevel(G)!prod;
+//"mat_sl2:", mat_sl2;
+     ind, s := CosetReduce(mat_sl2, G`FindCosetQ);
+//"first s:", s; Parent(s);
 // s := det_rep * ModLevel(G)!Eltseq(s);
      // s := det_rep^(-1) * ScalarMatrix(2,det) * ModLevel(G)!Eltseq(s);
      s := ModLevel(G)!Eltseq(s);
+//"final par s:", Parent(s); "RET:", ind, s; IndentPop();
      return ind, s;
   end function;
   return phi, G;

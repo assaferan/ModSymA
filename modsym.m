@@ -877,7 +877,7 @@ function ModularSymbolsDual(M, V)
    power to create nasty objects that don't satisfy the definition
    of a ModSymA.
 */
-   assert V subset DualRepresentation(M);
+   assert2 V subset DualRepresentation(M);
    MM := New(ModSymA);
    MM`root := AmbientSpace(M);
    MM`is_ambient_space := false;
