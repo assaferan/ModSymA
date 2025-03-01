@@ -1894,7 +1894,17 @@ function get_non_split_cartan_plus_coset(g,x)
   return {t,AbsoluteFrobenius(t)};
 end function;
 
+declare attributes GrpGL2Hat: Cartan_phi;
+
 function get_Cartan_phi(G)
+
+  if assigned G`Cartan_phi then
+//"REUSE get_Cartan_phi:"; TES(G);
+      c := G`Cartan_phi;
+      return Explode(c);
+  end if;
+
+//"get_Cartan_phi:"; TES(G);
   if not IsPrime(Level(G)) then
       error "Not Implemented for Nonsplit Cartan of composite level!";
   end if;
@@ -1916,7 +1926,24 @@ function get_Cartan_phi(G)
   end if;
   pairs := [<get_coset(cosets[i], alpha),
 	       <i, cosets[i]^(-1)> > : i in [1..#cosets]];
-  find_coset := map<[p[1] : p in pairs] -> Codomain(G`FindCoset) | pairs>;
+
+  codom := Codomain(G`FindCoset);
+//"first codom:", codom;
+  if Type(codom) eq SeqEnum then
+    codom := Universe(codom);
+  end if;
+//"new codom:", codom;
+
+  if 1 eq 1 then
+      A := AssociativeArray();
+      for p in pairs do
+	 A[p[1]] := p[2];
+      end for;
+      find_coset := map<Parent(pairs[1, 1]) -> codom | x :-> A[x]>;
+  else
+      find_coset := map<[p[1] : p in pairs] -> codom | pairs>;
+  end if;
+
   function phi(mat, phi_data)
     G := phi_data[1];
     alpha := phi_data[2];
@@ -1928,7 +1955,11 @@ function get_Cartan_phi(G)
     s  := mat * g;
     return ind, ModLevelGL(G)!s;
   end function;
-  return phi, <G, alpha, is_good, find_coset>;
+
+  t := <G, alpha, is_good, find_coset>;
+  G`Cartan_phi := <phi, t>;
+  return phi, t;
+  //return phi, <G, alpha, is_good, find_coset>;
 end function;
 
 function get_phi(G,p)
