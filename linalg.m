@@ -101,12 +101,56 @@ function KernelOn(A, B)
 // Then A defines a linear transformation of the space
 // spanned by B.  This function returns the
 // kernel of that transformation.
+
+   if IsZero(A) then
+       if Type(B) eq ModTupFld then
+	   return B;
+       else
+	   return Rowspace(Matrix(B));
+       end if;
+   end if;
+
    if Type(B) eq ModTupFld then
       BM := BasisMatrix(B);
    else
       BM := Matrix(B);
    end if;
-   return RowSpace(KernelMatrix(A) * BM);
+
+	if 0 eq 1 then
+		T := Cputime();
+		printf "KernelOn DUMP: A %o by %o, BM %o by %o\n",
+			 Nrows(A), Ncols(A), Nrows(BM), Ncols(BM);
+		Parent(A), Parent(BM);
+
+		if 0 eq 1 then
+			 printf "A := %m;\n", A;
+			 printf "BM := %m;\n", BM;
+		end if;
+	end if;
+
+	if Min(Nrows(A), Ncols(A)) gt 100 then
+		 SetInullspaceLLL(10);
+	end if;
+
+	SetInullspaceLLL(-1); // CRT FOR NOW
+
+	//SetVerbose("Nullspace", 1);
+	//"Do KernelMatrix"; time
+   k := KernelMatrix(A);
+	//SetVerbose("Nullspace", 0);
+
+	SetInullspaceLLL(0);
+
+	// Parent(k); "Do Prod"; time
+   k := k * BM;
+
+// Parent(k); "Do RowSpace"; time
+   k := RowSpace(k);
+// "Dim k:", Dimension(k), "by", Degree(k), "; TOTAL KernelOn:", Cputime(T);
+
+   return k;
+
+   //return RowSpace(KernelMatrix(A) * BM);
 end function;
 
 
@@ -320,9 +364,11 @@ end function;
 function MyCharpoly(A, proof)
    assert Nrows(A) gt 0;
    if Type(BaseRing(Parent(A))) eq FldRat then
-      return CharacteristicPolynomial(A : Al := "Modular", Proof:=proof);
+//"MyCharpoly DUMP A:"; A: Magma; time
+      //return CharacteristicPolynomial(A : Al := "Modular", Proof:=false);
+      return CharacteristicPolynomial(A : Al := "Interpolation", Proof:=false);
    end if;
-   return CharacteristicPolynomial(A);
+   return CharacteristicPolynomial(A: Proof := false);
 end function;
 
 

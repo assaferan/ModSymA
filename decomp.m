@@ -268,23 +268,39 @@ function Decomposition_recurse(M, p, stop,
    if p gt stop then   // by definition of this function!
       return [M];
    end if;
-   
 
    vprintf ModularSymbols, 1 : "Decomposing space of level %o and dimension %o using T_%o.\n",Level(M),Dimension(M), p;
    vprintf ModularSymbols, 2 : "\t\t(will stop at %o)\n", stop;
 
+   dual := DualRepresentation(M);
    T := DualHeckeOperator(M, p);
-   D := [ ];
+
+   char0 := Characteristic(BaseField(M)) eq 0;
+
+   if IsScalar(T) then
+       vprintf ModularSymbols, 1: "T_%o is zero\n", p;
+       W := ModularSymbolsDual(M, dual);
+       a := Dimension(M);
+       if char0 and
+	   W_is_irreducible(W,a,elliptic_only, random_op select p else 0)
+       then
+         vprint ModularSymbols, 1: "Already irreducible";
+	 W`is_irreducible := true;
+	 return [W];
+      end if;
+   end if;
+
+   D := [];
 
    if not elliptic_only then
       if GetVerbose("ModularSymbols") ge 2 then
          t := Cputime();
          printf "Computing characteristic polynomial of T_%o.\n", p;
       end if;
-      f := MyCharpoly(T,proof);
+      vtime ModularSymbols, 2: f := MyCharpoly(T,proof);
       if GetVerbose("ModularSymbols") ge 2 then
-         f;
-         printf "\t\ttime = %o\n", Cputime(t);
+         //f;
+         //printf "\t\ttime = %o\n", Cputime(t);
          t := Cputime();
          printf "Factoring characteristic polynomial.\n";
       end if;
@@ -298,16 +314,81 @@ function Decomposition_recurse(M, p, stop,
       FAC := [<x-a,1> : a in [-Floor(2*Sqrt(p))..Floor(2*Sqrt(p))]];
    end if;
 
-   for fac in FAC do
-      f,a := Explode(fac);
+   //USE_FPIS := 1 eq 1 and char0 and not IsScalar(T);
+   USE_FPIS := 1 eq 1 and char0 and #FAC gt 1;
+   // [Add GetVersion() check]
+
+	//"USE_FPIS:", USE_FPIS, "dim", Ncols(T);
+
+   if 1 eq 1 and GetVerbose("ModularSymbols") ge 2 then
+      "Orig T:";
+      //T: Magma;
+      Parent(T);
+      "Orig FAC:", FAC;
+   end if;
+
+   if USE_FPIS then
+      vprintf ModularSymbols, 2: "Get full primary invariant spaces; dim %o\n",
+	 Ncols(T);
+
+      IndentPush();
+      if Ncols(T) gt 1000 then
+	 SetVerbose("MFDump", 2);
+      end if;
+
+      vtime ModularSymbols, 2:
+	 USE_FPIS, PIS := FullPrimaryInvariantSpaces(T, FAC);
+
+      SetVerbose("MFDump", 0);
+      IndentPop();
+
+      if not USE_FPIS then
+	 vprint ModularSymbols, 2:
+	 "FAIL full primary invariant spaces; revert method";
+      else
+	 vprint ModularSymbols, 2:
+	 "Got spaces of dimensions:", [Dimension(x): x in PIS];
+      end if;
+   end if;
+
+   for fi := 1 to #FAC do
+
+      fac := FAC[fi];
+      f, a := Explode(fac);
+
       if Characteristic(BaseField(M)) eq 0 then
          fa := f;
       else
          fa := f^a;
       end if;
-      vprintf ModularSymbols, 2: "Cutting out subspace using f(T_%o), where f=%o.\n",p, f;
-      fT  := Evaluate(fa,T);
-      V   := KernelOn(fT,DualRepresentation(M));
+
+      vprintf ModularSymbols, 2:
+	 "Cutting out subspace using f(T_%o), where f=%o.\n",p, f;
+
+      if USE_FPIS then
+	 V := BasisMatrix(PIS[fi]);
+	 vprintf ModularSymbols, 2: "Subspace has dim %o\n", Nrows(V);
+
+	 vprintf ModularSymbols, 2: "Act on dual representation";
+	 vtime ModularSymbols, 2:
+	    V := V*BasisMatrix(dual);
+
+	 vprintf ModularSymbols, 2: "Get rowspace";
+	 vtime ModularSymbols, 2:
+	    V := Rowspace(V);
+      else
+	 vprintf ModularSymbols, 2: "Do evaluation";
+	 vtime ModularSymbols, 2:
+	    fT := Evaluate(fa,T);
+	 //"Now fT:", fT; Parent(fT);
+
+	 vprintf ModularSymbols, 2: "Get kernel";
+	 IndentPush();
+	 vtime ModularSymbols, 2:
+	    V := KernelOn(fT, dual);
+	 IndentPop();
+      end if;
+
       W   := ModularSymbolsDual(M,V);
       if assigned M`sub_representation then
          W`sub_representation := M`sub_representation;
@@ -321,8 +402,9 @@ function Decomposition_recurse(M, p, stop,
           error "WARNING: dim W = 0 factor; shouldn't happen.";
       end if;
 
-      if Characteristic(BaseField(W)) eq 0 and W_is_irreducible(W,a,elliptic_only, random_op select p else 0) then
-	 W`is_irreducible := true;
+      if Characteristic(BaseField(W)) eq 0 and
+			W_is_irreducible(W,a,elliptic_only, random_op select p else 0) then
+			W`is_irreducible := true;
          Append(~D,W); 
       else
          if not assigned W`is_irreducible then
@@ -392,10 +474,16 @@ p coprime to the level of M and p<= bound. }
    end if;
 
    // refine decomp 
-   refined_decomp := &cat[Decomposition_recurse(MM,NextPrime(known),
+	//"ORIG decomp:", decomp; time
+   refined_decomp := [Decomposition_recurse(MM,NextPrime(known),
                                           bound,Proof, false, false) :
                           MM in decomp];
          
+	// "FIRST refined_decomp:", refined_decomp;
+	// "DIM refined_decomp:", [[Dimension(x): x in D]: D in refined_decomp];
+
+   refined_decomp := &cat refined_decomp;
+
    (M`decomposition)`bound := bound;
    (M`decomposition)`decomp := [DualVectorSpace(MM) : MM in refined_decomp];
 
@@ -1796,10 +1884,10 @@ function Decomposition_dimension_recurse(M, p, stop,
          t := Cputime();
          printf "Computing characteristic polynomial of T_%o.\n", p;
       end if;
-      f := MyCharpoly(T,proof);
+      vtime ModularSymbols, 2: f := MyCharpoly(T,proof);
       if GetVerbose("ModularSymbols") ge 2 then
          f;
-         printf "\t\ttime = %o\n", Cputime(t);
+         //printf "\t\ttime = %o\n", Cputime(t);
          t := Cputime();
          printf "Factoring characteristic polynomial.\n";
       end if;
@@ -1853,8 +1941,10 @@ function Decomposition_dimension_recurse(M, p, stop,
          if not assigned W`is_irreducible then
             if NextPrime(p) le stop then
                q    := Dimension(W) eq Dimension(M) select NextPrime(p) else 2;
+IndentPush();
                Sub, is_ver_sub  := Decomposition_dimension_recurse(W, q, stop, 
                                              proof, elliptic_only, random_op); 
+IndentPop();
                dims cat:= Sub;
                is_verified cat:= is_ver_sub;
             else
