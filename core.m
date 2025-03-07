@@ -1843,7 +1843,7 @@ function get_general_phi(G)
      ind, s := CosetReduce(mat_sl2, G`FindCosetQ);
 //"first s:", s; Parent(s);
 // s := det_rep * ModLevel(G)!Eltseq(s);
-     // s := det_rep^(-1) * ScalarMatrix(2,det) * ModLevel(G)!Eltseq(s);
+     // OLD: s := det_rep^(-1) * ScalarMatrix(2,det) * ModLevel(G)!Eltseq(s);
      s := ModLevel(G)!Eltseq(s);
 //"final par s:", Parent(s); "RET:", ind, s; IndentPop();
      return ind, s;

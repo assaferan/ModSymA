@@ -1046,30 +1046,46 @@ function HeckeOperatorDirectlyOnModularSymbols(M,p : Squared := false)
 end function;
 
 function ManinSymbolsAction2(defining_tuple, uv, Heil)
+
 /*
-"*** ManinSymbolsAction2";
-"defining_tuple:", defining_tuple; Parent(defining_tuple);
-"uv:", uv; Parent(uv);
-"Heil:", Heil; Parent(Heil);
+//"*** ManinSymbolsAction2";
+//"defining_tuple:", defining_tuple; Parent(defining_tuple);
+"uv:", uv; //Parent(uv);
+"#Heil:", #Heil;
+//"Heil:", Heil; Parent(Heil);
 */
 
-  G := defining_tuple[1];
-  det := defining_tuple[2];
-  Tquot := defining_tuple[3];
-  Squot := defining_tuple[4];
-  Scoef := defining_tuple[5];
-  eps := defining_tuple[6];
+  /*
+  uv: 2x2 mat in MatrixGroup(2, IntegerRing(N))
+  #Heil: 4 (N=7), seq of 2x2 mats in Full Mat Alg, deg 2 over IntegerRing(N)
+
+  phi: function(mat, G) ... end function
+      [get_general_phi if not get_Cartan_phi]
+  phi_data: Arithmetic subgroup of PSL2 induced by MatrixGroup(2, N)...
+  */
+
+  G := defining_tuple[1]; //Power Structure of GrpGL2Hat
+  det := defining_tuple[2]; //Integer Ring
+  Tquot := defining_tuple[3]; //Seq over modtuple [Q]
+  Squot := defining_tuple[4]; //Seq over Z
+  Scoef := defining_tuple[5]; //Seq over Q
+  eps := defining_tuple[6];   //Group of characters of domain Sym(2)
+
+//"eps 1:", IsTrivial(eps);
+
   res := Universe(Tquot)!0;
   phi, phi_data := get_phi(G, det);
 //"phi:", phi; "phi_data:", phi_data;
   for mat in Heil do
     uvM := Parent(mat)!Eltseq(uv) * mat;
     ind, s := phi(uvM, phi_data);
+// printf "    ind: %o, c %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
     if ind ne 0 then
       e := s@eps;
       res +:= e*Scoef[ind]*Tquot[Squot[ind]];
     end if;
   end for;
+//"res Sup:", Support(res);
   return res;
 end function;
 
