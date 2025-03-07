@@ -109,6 +109,97 @@ intrinsic Representation(M::ModSymA) -> ModTupFld, Map, Map
    return VectorSpace(M);
 end intrinsic;
 
+////////////////
+
+function EvaluateSQF(M, V, Tsub, Tp, p)
+
+// ###
+
+   DUMP := 0 eq 1;
+
+   if DUMP then
+       "DUMP Tsub";
+       printf "X := %m;\n", Tsub;
+   end if;
+
+   Q := RationalField();
+   check_Q := func<T |
+       forall{X: X in T |
+	   Type(BaseRing(Parent(X))) in {RngInt, FldRat}
+       }>;
+
+   //Parent(Tsub); Parent(Tp); Parent(BasisMatrix(V));
+
+/// HERE CHOP
+
+   BV := BasisMatrix(V);
+
+   if Level(M) mod p ne 0 and check_Q(<Tsub, Tp, BV>) then
+
+      vprint ModularSymbols:
+	  "Get evaluation at sqf part of cp (with ker)";
+      vtime ModularSymbols:
+      //OV := V;
+	 V  := EvaluateSQFPCP(Tsub, Tp, BasisMatrix(V));
+      //assert V eq KernelOn(EvaluateSQFPCP(Tsub, Tp),OV);
+
+   else
+
+      if Level(M) mod p ne 0 and Characteristic(BaseField(M)) eq 0 then
+
+	 CHECK := 0 eq 1;
+
+	 fT := 0;
+
+	 if check_Q(<Tsub, Tp>) then
+	    vprint ModularSymbols: "Get evaluation at sqf part of cp";
+	    vtime ModularSymbols: fT := EvaluateSQFPCP(Tsub, Tp);
+	 end if;
+
+	 if fT cmpeq 0 or CHECK then
+	    vprint ModularSymbols: "Get factored char poly";
+	    //"Tsub:", Parent(Tsub); printf "X := %m;\n", Tsub;
+	    vtime ModularSymbols:
+	       fcp := FactoredCharacteristicPolynomial(Tsub);
+	    vprint ModularSymbols: "Factored char poly structure:",
+	       [<Degree(t[1]), t[2]>: t in fcp];
+	    vprint ModularSymbols: "Get evaluation product";
+
+	    if DUMP then
+	       "DUMP Tp";
+	       printf "X := %m;\n", Tp; "fcp:", fcp;
+	    end if;
+
+	    if check_Q(<Tp>) then
+	       vtime ModularSymbols:
+		  fT2 := EvaluationProduct([<t[1], 1>: t in fcp], Tp);
+	    else
+	       vtime ModularSymbols:
+		  fT2 := &*[Evaluate(f[1],Tp): f in fcp];
+	    end if;
+	    if CHECK then
+	       assert fT2 eq fT;
+	    end if;
+	    fT := fT2;
+	 end if;
+      else
+	 vprintf ModularSymbols:
+	 "Get char poly in dim %o\n", Ncols(Tsub);
+	 vtime ModularSymbols:
+	    cp := CharacteristicPolynomial(Tsub: Proof := false);
+
+	    vprintf ModularSymbols, 3: "charpoly = %o\n", cp;
+	    vtime ModularSymbols: fT := Evaluate(cp, Tp);
+      end if;
+
+      vprint MFDump: "Get KernelOn"; vtime MFDump:
+      V  := KernelOn(fT,V);
+   end if;
+
+   return V;
+
+end function;
+
 intrinsic VectorSpace(M::ModSymA) -> ModTupFld, Map, Map
 {"} // "
 
@@ -183,8 +274,14 @@ intrinsic VectorSpace(M::ModSymA) -> ModTupFld, Map, Map
 	      continue;
 	    end if;
 
-            Tp := Restrict(HeckeOperator(AmbientSpace(M),p),V);
-            Tquo := DualHeckeOperator(M,p);
+		Tp := Restrict(HeckeOperator(AmbientSpace(M),p),V);
+		Tquo := DualHeckeOperator(M,p);
+
+      if 1 eq 1 then
+			V := EvaluateSQF(M, V, Tquo, Tp, p);
+      else
+				vprint MFDump: "Par Tquo:", Parent(Tquo);
+				vprint MFDump: "Get cp"; vtime MFDump:
             cp := CharacteristicPolynomial(Tquo);
             R<x> := Parent(cp);
             vprintf ModularSymbols, 3: "charpoly = %o\n", cp; 
@@ -203,6 +300,7 @@ intrinsic VectorSpace(M::ModSymA) -> ModTupFld, Map, Map
             end if;
 
             V  := KernelOn(fT,V);
+	 end if;
 
 	    if p gt HeckeBound(M) and Dimension(V) gt Dimension(M) then
  if not IsEmpty(skipped_small_primes) then
