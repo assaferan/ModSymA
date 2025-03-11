@@ -1500,6 +1500,10 @@ function ManSymGenListToRep(M,m)
 	 dv := dv*RowSubmatrix(X, m2[dind]);
 	 sv := sv*RowSubmatrix(S, [-i: i in m2[sind]]);
 
+/*
+"dv:", dv;
+"sv:", sv;
+*/
 	 ans0 := dv + sv;
 
       return ans0;
@@ -1827,7 +1831,29 @@ end function;
 // This change is to make this operator compatible with
 // HeckeOperator for double cosets
 
-function get_general_phi(G)
+function get_general_phi(G: TrivialChar := false)
+
+if TrivialChar then
+  function phi(mat, G)
+//IndentPush(); "*** phi:";
+     det := Determinant(mat);
+//"mat:", mat; "det:", det;
+     if det notin Domain(G`DetRep) then return 0,0; end if;
+     det_rep := G`DetRep(det);
+//"det_rep:", det_rep; Parent(det_rep);
+	    // mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
+"\n----\nphi mat:", mat;
+"prod IN:", det, <det_rep, mat, ScalarMatrix(2,det)^(-1)>;
+     prod := (det_rep * mat * ScalarMatrix(2,det)^(-1));
+"prod:", prod;
+      ind := G`FindCosetQ(prod)[1];
+"RET ind:", ind;
+//"RET:", ind; IndentPop();
+     return ind;
+  end function;
+
+else
+
   function phi(mat, G)
 //IndentPush(); "*** phi:";
      det := Determinant(mat);
@@ -1848,6 +1874,9 @@ function get_general_phi(G)
 //"final par s:", Parent(s); "RET:", ind, s; IndentPop();
      return ind, s;
   end function;
+
+end if;
+
   return phi, G;
 end function;
 
@@ -1962,7 +1991,7 @@ function get_Cartan_phi(G)
   //return phi, <G, alpha, is_good, find_coset>;
 end function;
 
-function get_phi(G,p)
+function get_phi(G, p: TrivialChar := false)
   if (IsGammaNS(G) or IsGammaNSplus(G)) and IsPrime(Level(G)) then
     return get_Cartan_phi(G);
 // Once we figure out how to do it correctly, that's what will happen here.
@@ -1971,6 +2000,6 @@ function get_phi(G,p)
     return get_general_phi_bad_primes(G,p);
 */
   else
-    return get_general_phi(G);
+    return get_general_phi(G: TrivialChar := TrivialChar);
   end if;
 end function;

@@ -191,7 +191,8 @@ import "core.m":
    ManinSymbolsGeneralizedWeightedAction,
    ModularSymbolsBasis,
    P1GeneralizedWeightedAction,
-   UnwindManinSymbol;
+   UnwindManinSymbol,
+   ManSymGenListToRep;
 
 import "dims.m": 
    idxG0, 
@@ -1045,7 +1046,7 @@ function HeckeOperatorDirectlyOnModularSymbols(M,p : Squared := false)
    return &+[ActionOnModularSymbolsBasis(g,M) : g in R];
 end function;
 
-function ManinSymbolsAction2(defining_tuple, uv, Heil)
+function OrigManinSymbolsAction2(defining_tuple, uv, Heil)
 
 /*
 //"*** ManinSymbolsAction2";
@@ -1070,23 +1071,90 @@ function ManinSymbolsAction2(defining_tuple, uv, Heil)
   Squot := defining_tuple[4]; //Seq over Z
   Scoef := defining_tuple[5]; //Seq over Q
   eps := defining_tuple[6];   //Group of characters of domain Sym(2)
+M := defining_tuple[7];
 
-//"eps 1:", IsTrivial(eps);
+  if IsTrivial(eps) then
 
-  res := Universe(Tquot)!0;
-  phi, phi_data := get_phi(G, det);
-//"phi:", phi; "phi_data:", phi_data;
-  for mat in Heil do
-    uvM := Parent(mat)!Eltseq(uv) * mat;
-    ind, s := phi(uvM, phi_data);
-// printf "    ind: %o, c %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
-    if ind ne 0 then
-      e := s@eps;
-      res +:= e*Scoef[ind]*Tquot[Squot[ind]];
-    end if;
-  end for;
+// ###
+     phi, phi_data := get_phi(G, det: TrivialChar);
+// "phi:", phi; "phi_data:", phi_data;
+     res := Universe(Tquot)!0;
+
+if 1 eq 1 then
+   m := [];
+   for mat in Heil do
+      uvM := Parent(mat)!Eltseq(uv) * mat;
+      ind := phi(uvM, phi_data);
+      Append(~m, <1, ind>);
+   end for;
+   res := ManSymGenListToRep(M, m);
+else
+     for mat in Heil do
+       uvM := Parent(mat)!Eltseq(uv) * mat;
+       ind := phi(uvM, phi_data);
+// printf "    ind: %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
+       if ind ne 0 then
+	 res +:= Scoef[ind]*Tquot[Squot[ind]];
+       end if;
+     end for;
+end if;
+
 //"res Sup:", Support(res);
-  return res;
+     return res;
+
+  else
+
+     phi, phi_data := get_phi(G, det);
+// "phi:", phi; "phi_data:", phi_data;
+     res := Universe(Tquot)!0;
+     for mat in Heil do
+       uvM := Parent(mat)!Eltseq(uv) * mat;
+       ind, s := phi(uvM, phi_data);
+// printf "    ind: %o, c %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
+       if ind ne 0 then
+	 e := s@eps;
+	 res +:= e*Scoef[ind]*Tquot[Squot[ind]];
+       end if;
+     end for;
+//"res Sup:", Support(res);
+     return res;
+
+  end if;
+end function;
+
+TEST := 0 eq 1;
+
+has_inner, inner := IsIntrinsic("_ManinSymbolsAction2");
+if not has_inner then inner := 0; end if;
+
+function GetManinSymbolsAction2(defining_tuple)
+
+   eps := defining_tuple[6];
+   if not has_inner or not IsTrivial(eps) then
+      return OrigManinSymbolsAction2;
+   end if;
+
+   if not TEST then
+      return inner;
+   end if;
+
+   function ManinSymbolsAction2(defining_tuple, uv, Heil)
+      w0 := OrigManinSymbolsAction2(defining_tuple, uv, Heil);
+      w := inner(defining_tuple, uv, Heil);
+      if w ne w0 then
+	 "BAD inner ManinSymbolsAction2";
+	 "defining_tuple:", defining_tuple;
+	 "defining_tuple:", uv;
+	 "#Heil:", #Heil;
+	 "old res:", w0;
+	 "new res:", w;
+	 error "FAIL";
+      end if;
+"GOOD!";
+      return w;
+   end function;
+   return ManinSymbolsAction2;
+
 end function;
 
 
@@ -1456,23 +1524,29 @@ function HeckeOperatorHeilbronn(M, Heil)
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
       M`quot := quot;
-      defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
+      defining_tuple := <coset_list, Tquot, Squot, Scoef, eps>;
    else
       Tquot := quot`Tquot;
+// ###
+// Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+// M`quot := quot;
 
-      CallP1Action2 := ManinSymbolsAction2;
-      CallP1Action := ManinSymbolsAction;
       G := LevelSubgroup(M);
       // find_coset := M`mlist`find_coset;
       num_cosets := #M`mlist`coset_list;
       //phi := get_phi(G);
       // defining_tuple := <phi, num_cosets, Tquot, Squot, Scoef> ;
       param :=  Weight(M) eq 2 select det else num_cosets;
-      defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+      //defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+
+      defining_tuple :=
+	 <G, param, Tquot, Squot, Scoef, eps, M, G`DetRep`DetMapInfo,
+	    G`FindCosetQ`FindCosetQTMap>;
+
+      CallP1Action2 := GetManinSymbolsAction2(defining_tuple);
+      CallP1Action := ManinSymbolsAction;
    end if;
 
-   Append(~defining_tuple, eps);
- 
    if Weight(M) eq 2 then
 	 T := [ CallP1Action2(defining_tuple, uv, modNHeil) : 
 		      uv in generating_coset_list
@@ -1600,23 +1674,26 @@ function TnSparse(M, Heil, sparsevec: Singletons := false)
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
       M`quot := quot;
-      defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
+      defining_tuple := <coset_list, Tquot, Squot, Scoef, eps>;
    else
       Tquot := quot`Tquot;
 
-      CallP1Action2 := ManinSymbolsAction2;
-      CallP1Action := ManinSymbolsAction;
       G := LevelSubgroup(M);
       // find_coset := M`mlist`find_coset;
       num_cosets := #M`mlist`coset_list;
 //phi := get_phi(G);
       //    defining_tuple := <phi, num_cosets, Tquot, Squot, Scoef> ;
       param :=  Weight(M) eq 2 select det else num_cosets;
-      defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+
+      defining_tuple :=
+	 <G, param, Tquot, Squot, Scoef, eps, M, G`DetRep`DetMapInfo,
+	    G`FindCosetQ`FindCosetQTMap>;
+
+      //CallP1Action2 := ManinSymbolsAction2;
+      CallP1Action2 := GetManinSymbolsAction2(defining_tuple);
+      CallP1Action := ManinSymbolsAction;
    end if;
 
-   Append(~defining_tuple, eps);
-    
    if Weight(M) eq 2 then
 
 	 /*
