@@ -402,7 +402,7 @@ function XGroupV(A, p)
       p := 2; 
       while Dimension(A`X[i]) gt d do
          T := HeckeOperator_brandt(Z, p);   // compute p-th Hecke operator. 
-         f := CharacteristicPolynomial(HeckeOperator(A, p)); 
+         f := MyCharPoly(HeckeOperator(A, p)); 
          A`X[i] := A`X[i] meet IntegerKernelZ(Evaluate(f,T));
          p := NextPrime(p);
          if p ge 23 and IsVerbose("ModularSymbols") then
@@ -575,7 +575,7 @@ function MestreGroupV(M)
       while Dimension(M`mestre) gt d do
          T := TpD(Z, p);   // compute p-th Hecke operator. 
          f := PolynomialRing(Integers())!
-               CharacteristicPolynomial(HeckeOperator(M, p)); 
+               MyCharPoly(HeckeOperator(M, p)); 
          M`mestre := M`mestre meet Kernel(Evaluate(f,T));
          p := NextPrime(p);
          if p gt 7 and IsVerbose("ModularSymbols") then

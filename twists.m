@@ -490,14 +490,14 @@ function my_ev_before_lift(A, M)
 	  "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
       if use_quick then
           if QuickIrredTest(T) then
-               vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
+               vprintf ModularSymbols, 2: "MyCharPoly: "; 
                vtime ModularSymbols, 2:
-               f := CharacteristicPolynomial(T);
+               f := MyCharPoly(T);
                // assert IsIrreducible(f);
                break;
           end if;
       else
-          f := CharacteristicPolynomial(T);
+          f := MyCharPoly(T);
           if IsIrreducible(f) then
               break;
           end if;

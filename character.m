@@ -96,7 +96,7 @@ m is the exponent of Q.}
    end if;
 end intrinsic;
 
-intrinsic KernelInternal(x::GrpChrElt) -> GrpFin
+intrinsic KernelInternal(x::GrpChrElt) -> Grp
 {Compute the kernel of x in the finite quotient}
   if not assigned x`Kernel then
      K := sub< Domain(x) | [y : y in Domain(x) | Evaluate(x,y) eq 1]>;
@@ -110,7 +110,7 @@ intrinsic Kernel(x::GrpChrElt) -> GrpMat
   return KernelInternal(x)@@Parent(x)`QuotientMap;
 end intrinsic; 
 
-intrinsic Conductor(x::GrpChrElt) -> GrpFin
+intrinsic Conductor(x::GrpChrElt) -> Grp
 {Compute the conductor of x}
   // Currently this is not working - Magma claims this is not computable
   // K := Kernel(x`Map);

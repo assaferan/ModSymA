@@ -94,6 +94,19 @@ function VectorSpaceZBasis(B)
    return VectorSpaceWithBasis([V!v : v in Latbase]);
 end function;
 
+function MyKernelMatrix(A)
+   SetInullspaceLLL(-1);
+   K := KernelMatrix(A);
+   SetInullspaceLLL(0);
+   return K;
+end function;
+
+function MyKernel(A)
+   SetInullspaceLLL(-1);
+   K := Kernel(A);
+   SetInullspaceLLL(0);
+   return K;
+end function;
 
 function KernelOn(A, B)
 // Suppose B is a basis for an n-dimensional subspace
@@ -116,36 +129,46 @@ function KernelOn(A, B)
       BM := Matrix(B);
    end if;
 
-	if 0 eq 1 then
-		T := Cputime();
-		printf "KernelOn DUMP: A %o by %o, BM %o by %o\n",
-			 Nrows(A), Ncols(A), Nrows(BM), Ncols(BM);
-		Parent(A), Parent(BM);
+   if 0 eq 1 then
+      T := Cputime();
+      printf "KernelOn DUMP: A %o by %o, BM %o by %o\n",
+	 Nrows(A), Ncols(A), Nrows(BM), Ncols(BM);
+	 Parent(A), Parent(BM);
 
-		if 0 eq 1 then
-			 printf "A := %m;\n", A;
-			 printf "BM := %m;\n", BM;
-		end if;
-	end if;
+      if 0 eq 1 then
+	 printf "A := %m;\n", A;
+	 printf "BM := %m;\n", BM;
+      end if;
+   end if;
 
-	if Min(Nrows(A), Ncols(A)) gt 100 then
-		 SetInullspaceLLL(10);
-	end if;
+   /*
+   if Min(Nrows(A), Ncols(A)) gt 100 then
+      SetInullspaceLLL(10);
+   end if;
+   */
 
-	SetInullspaceLLL(-1); // CRT FOR NOW
+   if Nrows(BM) ne Ncols(BM) or not IsOne(BM) then
 
-	//SetVerbose("Nullspace", 1);
-	//"Do KernelMatrix"; time
-   k := KernelMatrix(A);
-	//SetVerbose("Nullspace", 0);
+      //SetVerbose("Nullspace", 1);
+      //"Do KernelMatrix"; time
+      k := MyKernelMatrix(A);
+      //SetVerbose("Nullspace", 0);
 
-	SetInullspaceLLL(0);
+      // Parent(k); "Do Prod"; time
+      k := k * BM;
 
-	// Parent(k); "Do Prod"; time
-   k := k * BM;
+   // Parent(k); "Do RowSpace"; time
+      k := RowSpace(k);
 
-// Parent(k); "Do RowSpace"; time
-   k := RowSpace(k);
+   else
+
+      //SetVerbose("Nullspace", 1);
+      //"Do KernelMatrix"; time
+      k := MyKernel(A);
+      //SetVerbose("Nullspace", 0);
+
+   end if;
+
 // "Dim k:", Dimension(k), "by", Degree(k), "; TOTAL KernelOn:", Cputime(T);
 
    return k;
@@ -361,16 +384,22 @@ function Pivots(B)   // find pivots of reduced basis.
 end function;
 
    
-function MyCharpoly(A, proof)
+function MyCharPolyP(A, proof)
    assert Nrows(A) gt 0;
+   //"MyCharPolyP DUMP A:"; A: Magma;
    if Type(BaseRing(Parent(A))) eq FldRat then
-//"MyCharpoly DUMP A:"; A: Magma; time
-      //return CharacteristicPolynomial(A : Al := "Modular", Proof:=false);
-      return CharacteristicPolynomial(A : Al := "Interpolation", Proof:=false);
+      try
+	 return CharacteristicPolynomial(A: Al := "Smooth", Proof := proof);
+      catch e
+	 ;
+      end try;
    end if;
-   return CharacteristicPolynomial(A: Proof := false);
+   return CharacteristicPolynomial(A: Proof := proof);
 end function;
 
+function MyCharPoly(A)
+   return MyCharPolyP(A, true);
+end function;
 
 function Restrict(A, x)
    F := BaseRing(Parent(A));
@@ -383,7 +412,9 @@ function Restrict(A, x)
       end if;
       B := Matrix(F, BasisMatrix(x));
    end if; 
+   SetInullspaceLLL(-1);
    R := MatrixAlgebra(F, Nrows(B)) ! Solution(B, B*A);
+   SetInullspaceLLL(0);
    return R;
 end function;
 
@@ -399,7 +430,7 @@ function IntegerKernel(A)
       d := 1;
    end if;
    B := RMatrixSpace(Integers(),n,m) ! (d*A);
-   b := Basis(Kernel(B));
+   b := Basis(MyKernel(B));
    if #b eq 0 then
       return sub<VectorSpace(Rationals(),n)|0>;
    end if;
@@ -410,12 +441,12 @@ end function;
 function IntegerKernelZ(A)
 // Compute integer kernel of the matrix A, and return as integral space.
    if Type(BaseRing(Parent(A))) eq RngInt then
-      return Kernel(A);
+      return MyKernel(A);
    end if;
    n:= Nrows(A);
    d:= LCM([Denominator(a) : a in Eltseq(A)]);
    B:= MatrixAlgebra(Integers(),n) ! (d*A);
-   return Kernel(B);
+   return MyKernel(B);
 end function;     
 
 

@@ -145,8 +145,11 @@ import "arith.m"  : DotProd,
                     PrimeSeq,
                     SmallestPrimeNondivisor;
 
-import "linalg.m" : KernelOn,
-                    MyCharpoly;
+import "linalg.m" : MyCharPoly,
+		    MyKernel,
+		    MyKernelMatrix,
+		    KernelOn,
+                    MyCharPolyP;
 
 import "../GrpGL2Hat/misc.m" : IntermediateSubgroups;
 
@@ -232,7 +235,7 @@ function W_is_irreducible(W,a,elliptic_only, random_operator_bound)
       V := Sign(W) ne 0 select W else PlusSubspaceDual(W);
       T := &+[Random([-3,-2,-1,1,2,3])*DualHeckeOperator(V,ell) : 
                 ell in PrimeSeq(2,random_operator_bound)];
-      f := CharacteristicPolynomial(T);
+      f := MyCharPoly(T);
       if IsVerbose("ModularSymbols") then 
          printf "Charpoly = %o.\n", f;
       end if;
@@ -244,7 +247,10 @@ function W_is_irreducible(W,a,elliptic_only, random_operator_bound)
    return false;  
 
 end function;
-        
+
+function _FullPrimaryInvariantSpaces(T, FAC)
+   return FullPrimaryInvariantSpaces(T, FAC);
+end function;
 
 function Decomposition_recurse(M, p, stop, 
                                proof, elliptic_only, random_op)
@@ -275,9 +281,12 @@ function Decomposition_recurse(M, p, stop,
    dual := DualRepresentation(M);
    T := DualHeckeOperator(M, p);
 
+// if Nrows(T) le 50 then "T:", T; end if;
+
    char0 := Characteristic(BaseField(M)) eq 0;
 
-   if IsScalar(T) then
+   sc := IsScalar(T);
+   if sc then
        vprintf ModularSymbols, 1: "T_%o is zero\n", p;
        W := ModularSymbolsDual(M, dual);
        a := Dimension(M);
@@ -297,7 +306,7 @@ function Decomposition_recurse(M, p, stop,
          t := Cputime();
          printf "Computing characteristic polynomial of T_%o.\n", p;
       end if;
-      vtime ModularSymbols, 2: f := MyCharpoly(T,proof);
+      vtime ModularSymbols, 2: f := MyCharPolyP(T,proof);
       if GetVerbose("ModularSymbols") ge 2 then
          //f;
          //printf "\t\ttime = %o\n", Cputime(t);
@@ -337,7 +346,7 @@ function Decomposition_recurse(M, p, stop,
       end if;
 
       vtime ModularSymbols, 2:
-	 USE_FPIS, PIS := FullPrimaryInvariantSpaces(T, FAC);
+	 USE_FPIS, PIS := _FullPrimaryInvariantSpaces(T, FAC);
 
       SetVerbose("MFDump", 0);
       IndentPop();
@@ -365,7 +374,10 @@ function Decomposition_recurse(M, p, stop,
       vprintf ModularSymbols, 2:
 	 "Cutting out subspace using f(T_%o), where f=%o.\n",p, f;
 
-      if USE_FPIS then
+      if sc then
+	 vprint ModularSymbols, 2: "Scalar case";
+	 V := dual;
+      elif USE_FPIS then
 	 V := BasisMatrix(PIS[fi]);
 	 vprintf ModularSymbols, 2: "Subspace has dim %o\n", Nrows(V);
 
@@ -402,7 +414,9 @@ function Decomposition_recurse(M, p, stop,
           error "WARNING: dim W = 0 factor; shouldn't happen.";
       end if;
 
-      if Characteristic(BaseField(W)) eq 0 and
+      if
+true and
+      Characteristic(BaseField(W)) eq 0 and
 			W_is_irreducible(W,a,elliptic_only, random_op select p else 0) then
 			W`is_irreducible := true;
          Append(~D,W); 
@@ -1238,7 +1252,7 @@ cut out by the system of eigenvalues corresponding to E.}
          vprintf ModularSymbols: 
                 "Now down to dimension %o, using %o\n", Dimension(K), <p, ap>;
          Tp := FastTn(M, K, p);
-         K := Rowspace( KernelMatrix(Tp - ap) * BasisMatrix(K) );
+         K := Rowspace( MyKernelMatrix(Tp - ap) * BasisMatrix(K) );
       end while;
       assert Dimension(K) eq d;
 
@@ -1577,13 +1591,13 @@ vtime ModularSymbols:
 
       vprintf ModularSymbols: "Finding invariant subspaces: ";
       vtime ModularSymbols:
-      successful, K, L := FullPrimaryInvariantSpaces(T_int);
+      successful, K, L := _FullPrimaryInvariantSpaces(T_int);
       // should be successful (and for dual) unless very unlucky
 
       if successful then
          if debug and BaseRing(K[1]) eq Rationals() then
            TT := ChangeRing(T_int, Rationals());
-           printf "Check answer from FullPrimaryInvariantSpaces, dim %o\n", Ncols(TT);
+           printf "Check answer from _FullPrimaryInvariantSpaces, dim %o\n", Ncols(TT);
            time for V in K do  // check V is invariant under T_int
                for v in Basis(V) do assert v*TT in V; end for; end for;
          end if;
@@ -1605,7 +1619,7 @@ vtime ModularSymbols:
          end if;
          vprintf ModularSymbols: "Finding invariant subspaces of dual: ";
          vtime ModularSymbols:
-         dual_successful, Kdual := FullPrimaryInvariantSpaces(Tdual_int, cp);
+         dual_successful, Kdual := _FullPrimaryInvariantSpaces(Tdual_int, cp);
       end if;
 
       if successful and dual_successful then
@@ -1831,7 +1845,7 @@ We require that M is either cuspidal or its ambient space.}
  
    p := 2;
    while Dimension(B) gt target_dimension do
-      I := [<p, CharacteristicPolynomial(HeckeOperator(M,p))>];
+      I := [<p, MyCharPoly(HeckeOperator(M,p))>];
       B := Kernel(I,B);
       p := NextPrime(p);
    end while;
@@ -1884,7 +1898,7 @@ function Decomposition_dimension_recurse(M, p, stop,
          t := Cputime();
          printf "Computing characteristic polynomial of T_%o.\n", p;
       end if;
-      vtime ModularSymbols, 2: f := MyCharpoly(T,proof);
+      vtime ModularSymbols, 2: f := MyCharPolyP(T,proof);
       if GetVerbose("ModularSymbols") ge 2 then
          f;
          //printf "\t\ttime = %o\n", Cputime(t);

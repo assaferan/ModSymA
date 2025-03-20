@@ -46,7 +46,7 @@ freeze;
 
 import "calc.m" :   EigenvectorOfMatrixWithCharpoly ;
 
-import "linalg.m" : MyCharpoly,
+import "linalg.m" : MyCharPolyP,
                     Restrict;
 
 
@@ -308,7 +308,7 @@ function Decomposition(X : Proof := true)
       while p le 7 and not &and Irred do
          T := TpD(X,p);
          for V in [ V : V in Decomp | not Irred[Index(Decomp,V)] ] do
-            fact := Factorization(MyCharpoly(Restrict(T,V),Proof));
+            fact := Factorization(MyCharPolyP(Restrict(T,V),Proof));
             if #fact gt 1 then
                Remove(~Irred,Index(Decomp,V));
                Exclude(~Decomp,V);
@@ -335,14 +335,14 @@ end function;
 function MestreEigenvector(X, V) 
    p := 2;
    T := Restrict(TpD(X,p),V);
-   f := MyCharpoly(T,true);
+   f := MyCharPolyP(T,true);
    while not IsIrreducible(f) do
       p := NextPrime(p);
       if p gt 7 then
          error "MestreEigenvector: Could not verify that second argument is irreducible.";
       end if;
       T +:= Random(1,10)*Restrict(TpD(X,p),V);
-      f := MyCharpoly(T,true);
+      f := MyCharPolyP(T,true);
    end while;
    e := EigenvectorOfMatrixWithCharpoly(
                MatrixAlgebra(Rationals(),Ncols(T))!T,f);

@@ -222,6 +222,7 @@ forward
    Heilbronn,
    TnSparse;
 
+Z := IntegerRing();
 
 /*********************************************************
  *                                                       *
@@ -1220,6 +1221,25 @@ procedure Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action)
 	    end for;
 	    X := Matrix(Tquot[dl]);
 	    S := SparseMatrix(Matrix(Tquot[sl]));
+
+//"Tquot:", Tquot;
+	       Scoef := ChangeUniverse(quot`Scoef, Z);
+	       Tquot := ChangeUniverse(Tquot, ChangeRing(Universe(Tquot), Z));
+	       XX := Matrix(Z, X);
+	       SS := SparseMatrix(Z, S);
+	       X := XX;
+	       S := SS;
+	       quot`Scoef := Scoef;
+	       quot`Tquot := Tquot;
+"Move to Z:", Parent(X); S;
+V;
+	    try x:=1;
+	    catch e
+"FAIL Move to Z:",
+Parent(X); S;
+"Scoef:", Scoef;
+
+	    end try;
 	    Tquot := <map, X, S, V>;
 //"Mixed Tquot:", Tquot;
 //printf "Mixed Tquot: n: %o, l: %o, X: %o by %o (d %.3o), sp: %o (d %.3o)\n",
@@ -1559,7 +1579,9 @@ function HeckeOperatorHeilbronn(M, Heil)
 	      ];
    end if; 
 
-   return MatrixAlgebra(BaseField(M),Dimension(M))!T;
+//"Par T:", Parent(T); "BF:", BaseField(M);
+
+   return MatrixAlgebra(BaseField(M),Dimension(M))!Matrix(T);
 end function;
 
 
@@ -1678,6 +1700,7 @@ function TnSparse(M, Heil, sparsevec: Singletons := false)
    else
       Tquot := quot`Tquot;
 
+//"P TQ:", Parent(Tquot); "TQ:", Tquot;
       G := LevelSubgroup(M);
       // find_coset := M`mlist`find_coset;
       num_cosets := #M`mlist`coset_list;
@@ -1705,6 +1728,7 @@ function TnSparse(M, Heil, sparsevec: Singletons := false)
 
 	 ans := 0;
          for m in sparsevec do
+//Parent(defining_tuple);
 	     mat := m[1]*CallP1Action2(
 		 defining_tuple, generating_coset_list[m[2]], modNHeil
 	     );
@@ -2067,7 +2091,20 @@ function FastTnData(M, V)
 
 
    n := #V;
-   B := Basis(sub<Representation(AmbientSpace(M))|V>);
+   if 1 eq 1 then
+      repeat
+	 p := PreviousPrime(Random(2^23, 11863279));
+	 K := GF(p);
+	 try
+	    B := Basis(Rowspace(Matrix(K, Matrix(V))));
+	 catch e
+	    B := [];
+	 end try;
+      until #B eq n;
+   else
+      B := Basis(sub<Representation(AmbientSpace(M))|V>);
+   end if;
+
    assert #B eq n;
    // Find pivot columns.
    e := Pivots(B);
@@ -2076,10 +2113,17 @@ function FastTnData(M, V)
    VE    := RMatrixSpace(BaseField(M),n,n)!
                [V[i][e[j]] : j in [1..n], i in [1..n]];
    VEinv := VE^(-1);
+
+   l, C := CanChangeRing(VEinv, Z);
+   if l then
+      VEinv := C;
+   end if;
    
    return rec<CFastData| V:=V, e:=e, VEinv:=VEinv>;
 end function;
 
+
+empty := [**];
 
 function FastTn(M, V, n)
    assert IsAmbientSpace(M);
@@ -2088,20 +2132,106 @@ function FastTn(M, V, n)
       Tn := DualHeckeOperator(M,n);
       return Restrict(Tn,V);
    end if;
+
    // Compute action of Transpose(Tn) on the Hecke-stable subspace V.
    FastData := FastTnData(M, Basis(V));
-   H     := Heilbronn(M,n,false);
    F     := BaseField(M);
    V     := FastData`V;
-   n     := #V;
-   m     := Dimension(AmbientSpace(M));
    e     := FastData`e;
-   VEinv := FastData`VEinv;
+
+/*
+"HERE M:", M;
+"HERE orig n:", n;
+"HERE e:", e;
+"HERE #e:", #e;
+*/
+
+   TE := 0;
+   if assigned M`TnSparse_data then
+      A := M`TnSparse_data;
+      M`TnSparse_data := 0;
+   else
+      A := AssociativeArray();
+   end if;
+
+   if IsDefined(A, n) then
+      q := A[n];
+      A[n] := empty;
+   else
+      q := [* 0: j in [1 .. Dimension(M)] *];
+   end if;
+
+//"stored:", [j: j in [1..Dimension(M)] | q[j] cmpne 0];
+   TE := [];
+   for j in e do
+      v := q[j];
+      if v cmpeq 0 then
+	 H := Heilbronn(M,n,false); // store!
+	 v := TnSparse(M, H, [<1,j>]);
+	 q[j] := v;
+//"    new j", j;
+      end if;
+      Append(~TE, v);
+   end for;
+   A[n] := q;
+   M`TnSparse_data := A;
+   //TE := A[n][e];
+   if 0 eq 1 then
+      "REUSE TE:", TE;
+      H := Heilbronn(M,n,false);
+      old := [TnSparse(M, H, [<1,e[i]>]) : i in [1..#e]];
+      "OLD TE:", old;
+      assert old eq TE;
+   end if;
+
+   /*
+   if TE cmpeq 0 then
+      H := Heilbronn(M,n,false);
+"HERE #H, Hash(H):", #H, Hash(H);
+      TE := [TnSparse(M, H, [<1,e[i]>]) : i in [1..#e]];
+      A[n] := TE;
+"STORE FOR", e;
+      M`TnSparse_data := A;
+   end if;
+   */
+
    // The next step is where all of the time is spent. 
-   TE    := [TnSparse(M, H, [<1,e[i]>]) : i in [1..n]];
+
+   m     := Dimension(AmbientSpace(M));
+   n     := #V;
    Vmat  := RMatrixSpace(F, n, m) ! V;
-   TEmat := RMatrixSpace(F, n, m) ! TE;
-   return  MatrixAlgebra(F,n)!Eltseq(Vmat*Transpose(TEmat)*VEinv);
+
+//"HERE V dim:", #V;
+//"HERE TE:", TE;
+//"n:", n;
+//"m:", m;
+
+   //TEmat := RMatrixSpace(F, n, m) ! TE;
+   TEmat := Matrix(TE);
+   TEmat := Transpose(TEmat);
+   VEinv := FastData`VEinv;
+
+   // Do RHS prod first, since typically entries smaller on RHS:
+//"mat pars:", Parent(TEmat); Parent(VEinv); "VEinv:", Set(Eltseq(VEinv));
+
+   l, C := CanChangeRing(TEmat, Z);
+   if l then
+      TEmat := C;
+   end if;
+
+   return  Matrix(Vmat*(TEmat*VEinv));
+
+"VMat:", Parent(Vmat); Density(Vmat);
+"TEmat:", Parent(TEmat); Density(TEmat);
+"VEinv:", Parent(VEinv); Density(VEinv);
+"p1 density:", Density(Vmat*TEmat);
+"p2 density:", Density(TEmat*VEinv);
+"p12 density:", Density(Vmat*TEmat*VEinv);
+"p1:", Vmat*TEmat;
+"p2:", TEmat*VEinv;
+"p3:", Matrix(Vmat*TEmat*VEinv);
+
+   return  Matrix(Vmat*TEmat*VEinv);
 end function;
 
 
@@ -2114,7 +2244,7 @@ Note that DualHeckeOperator(M,n) is not guaranteed to equal the
 transpose of HeckeOperator(M,n).}
    require not assigned M`al_decomp or GCD(n,Level(M)) eq 1 : 
     "Hecke operators of index not coprime to the level are not defined on Atkin-Lehner factors.";
-
+//"DualHeckeOperator M:", M; "Amb:", AmbientSpace(M); "n:", n;
    requirege n,1;
    if IsAmbientSpace(M) then
       return Transpose(HeckeOperator(M,n));
@@ -2318,14 +2448,14 @@ the conductor of the Dirichlet character.}
          F[r,c+n] := ComplexConjugate(A[r,c]);
       end for;
    end for;
-print "FCP(F) = ", Factorization(CharacteristicPolynomial(F));
+print "FCP(F) = ", Factorization(MyCharPoly(F));
 */
    
          phi_Q := FieldAutomorphismMatrix(AmbientSpace(M), ComplexConjugate);  
          A_Q := RestrictionOfScalars(A);
          A := phi_Q*A_Q;
 //print "A = ", A;
-//print "FCP(A) = ", Factorization(CharacteristicPolynomial(A));
+//print "FCP(A) = ", Factorization(MyCharPoly(A));
          Append(~M`atkin_lehner, <q,A>);
       end if;
    end if;

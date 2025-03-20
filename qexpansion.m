@@ -132,7 +132,7 @@ import "arith.m"  :   DotProd,
 import "../Box.m" : BoxMethod, qExpansions;
 
 import "linalg.m" :   EchelonPolySeq,
-                      MyCharpoly,
+                      MyCharPolyP,
                       Pivots,
                       Restrict,
                       SaturatePolySeq,
@@ -1318,14 +1318,14 @@ function my_ev_before_lift(A, M)
 	  "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
       if use_quick then
           if QuickIrredTest(T) then
-               vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
+               vprintf ModularSymbols, 2: "MyCharPoly: "; 
                vtime ModularSymbols, 2:
-               f := CharacteristicPolynomial(T);
+               f := MyCharPoly(T);
                // assert IsIrreducible(f);
                break;
           end if;
       else
-          f := CharacteristicPolynomial(T);
+          f := MyCharPoly(T);
           if IsIrreducible(f) then
               break;
           end if;
@@ -1371,14 +1371,14 @@ function FindIrreducibleHeckeOperator(A : e := 1)
 	    "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
         if use_quick then
             if QuickIrredTest(T) then
-                 vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
+                 vprintf ModularSymbols, 2: "MyCharPoly: "; 
                  vtime ModularSymbols, 2:
-                 f := CharacteristicPolynomial(T);
+                 f := MyCharPoly(T);
                  // assert IsIrreducible(f);
                  break;
             end if;
         else
-            f := CharacteristicPolynomial(T);
+            f := MyCharPoly(T);
             if IsIrreducible(f) then
                 break;
             end if;
@@ -1656,7 +1656,7 @@ Q instead of a cyclotomic extension of Q.}
       inc := hom<C -> L | L.1>;
    end if;
 
-   //f2 := CharacteristicPolynomial(L.1);   
+   //f2 := MyCharPoly(L.1);   
    W := VectorSpace(RationalField(), Degree(C)*Dimension(M));
    V2 := [W|&cat[Eltseq(e) : e in Eltseq(v)] : v in V];
    R := Domain(phi);

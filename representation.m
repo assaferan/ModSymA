@@ -80,6 +80,9 @@ freeze;
 
 import "linalg.m":    
    Intersect_Vector_Space_With_Lattice,
+   MyCharPoly,
+   MyKernel,
+   MyKernelMatrix,
    KernelOn,
    MakeLattice,
    Restrict,
@@ -138,10 +141,55 @@ function EvaluateSQF(M, V, Tsub, Tp, p)
 
       vprint ModularSymbols:
 	  "Get evaluation at sqf part of cp (with ker)";
+
+/*
+"DUMP1";
+printf "A := %m;\n", Tsub;
+printf "B := %m;\n", Tp;
+printf "V := %m;\n", BasisMatrix(V);
+"time E := EvaluateSQFPCP(A, B, V);";
+*/
+
+verb := GetVerbose("ModularSymbols");
+SetVerbose("ModularSymbols", 0);
+
+verb2 := GetVerbose("MFDump");
+SetVerbose("MFDump", 0);
+      if 0 eq 1 then
+	 vprint ModularSymbols: "Get cp at dim", Nrows(Tsub);
+	 vtime ModularSymbols:
+	    cp := MyCharPoly(Tsub);
+	 cp := SquarefreePart(cp);
+	 d := Degree(cp);
+	 vprintf ModularSymbols: "cp degree: %o\n", d;
+//vprint ModularSymbols: Factorization(cp);
+
+	 C := Coefficients(cp);
+	 g := GCD([i: i in [0 .. d] | C[i + 1] ne 0]);
+	 vprintf ModularSymbols: "Deflation: %o\n", g;
+
+	 if g gt 1 then
+	    cp := Parent(cp) ! [C[i + 1]: i in [0 .. d by g]];
+	    vprintf ModularSymbols: "Reduced cp: %o\n", cp;
+	    vprintf ModularSymbols: "Factorization cp: %o\n", Factorization(cp);
+	    vprintf ModularSymbols: "Do power at dim %o\n", Nrows(Tp);
+	    vtime ModularSymbols: E := Tp^g;
+	    vprintf ModularSymbols: "Do eval at degree %o\n", Degree(cp);
+	    vtime ModularSymbols: E := Evaluate(cp, E);
+	    vprint MFDump: "Get KernelOn"; vtime MFDump:
+	       V  := KernelOn(E, V);
+//SetVerbose("ModularSymbols", verb);
+	    return V;
+	 end if;
+      end if;
+
+      vprint ModularSymbols: "Use SQF method", Nrows(Tsub), Nrows(Tp);
       vtime ModularSymbols:
       //OV := V;
 	 V  := EvaluateSQFPCP(Tsub, Tp, BasisMatrix(V));
       //assert V eq KernelOn(EvaluateSQFPCP(Tsub, Tp),OV);
+SetVerbose("ModularSymbols", verb);
+SetVerbose("MFDump", verb2);
 
    else
 
@@ -152,6 +200,13 @@ function EvaluateSQF(M, V, Tsub, Tp, p)
 	 fT := 0;
 
 	 if check_Q(<Tsub, Tp>) then
+/*
+"DUMP2";
+printf "A := %m;\n", Tsub;
+printf "B := %m;\n", Tp;
+printf "V := %m;\n", BasisMatrix(V);
+"time E := EvaluateSQFPCP(A, B, V);";
+*/
 	    vprint ModularSymbols: "Get evaluation at sqf part of cp";
 	    vtime ModularSymbols: fT := EvaluateSQFPCP(Tsub, Tp);
 	 end if;
@@ -186,7 +241,7 @@ function EvaluateSQF(M, V, Tsub, Tp, p)
 	 vprintf ModularSymbols:
 	 "Get char poly in dim %o\n", Ncols(Tsub);
 	 vtime ModularSymbols:
-	    cp := CharacteristicPolynomial(Tsub: Proof := false);
+	    cp := MyCharPoly(Tsub);
 
 	    vprintf ModularSymbols, 3: "charpoly = %o\n", cp;
 	    vtime ModularSymbols: fT := Evaluate(cp, Tp);
@@ -282,7 +337,7 @@ intrinsic VectorSpace(M::ModSymA) -> ModTupFld, Map, Map
       else
 				vprint MFDump: "Par Tquo:", Parent(Tquo);
 				vprint MFDump: "Get cp"; vtime MFDump:
-            cp := CharacteristicPolynomial(Tquo);
+            cp := MyCharPoly(Tquo);
             R<x> := Parent(cp);
             vprintf ModularSymbols, 3: "charpoly = %o\n", cp; 
 
@@ -422,7 +477,13 @@ that is isomorphic to M as module of the Hecke algebra}
             // space the ProjectionMatrix problem doesn't arise.
             Tsub := Restrict(HeckeOperator(AmbientSpace(M),p),
 				VectorSpace(M));
-            cp := CharacteristicPolynomial(Tsub);
+
+	 if 1 eq 1 then
+	    vprint MFDump: "Eval SQF Tquo:", Parent(Tsub);
+	    vtime MFDump: V := EvaluateSQF(M, V, Tsub, Tp, p);
+	 else
+
+            cp := MyCharPoly(Tsub);
  
             vprintf ModularSymbols, 3: "charpoly = %o\n", cp;
 //"DualVectorSpace: Evaluate on", BaseRing(Parent(cp)), "and", BaseRing(Tp); time
@@ -433,6 +494,7 @@ that is isomorphic to M as module of the Hecke algebra}
             end if;
             
             V  := KernelOn(fT,V);
+	 end if;
   
             if p gt HeckeBound(M) and Dimension(V) gt Dimension(M) then
 	       if Characteristic(BaseField(M)) eq 0 then

@@ -177,6 +177,7 @@ forward convergent,
         UnwindManinSymbol,
         WindManinSymbol;
 
+Z := IntegerRing();
 
 /************************************************************************
  *                                                                      *
@@ -242,7 +243,6 @@ CManSymGenList := recformat<
 /*
 // This is now in the C.
 function P1Normalize(x) 
-   Z := IntegerRing();
    u := x[1];
    v := x[2];
    R := Parent(u);
@@ -1446,10 +1446,28 @@ function ManSymGenListToRep(M,m)
       return M!0;
    end if;
 
+   USE_NEW_TQuot := 1 eq 1;
+
+   if USE_NEW_TQuot then
+      Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+      A := AmbientSpace(M);
+      A`quot := quot;
+   end if;
+
    Scoef := quot`Scoef;
    Squot := quot`Squot;
 
+//"Scoef:", Scoef; Parent(Scoef);
+
    c := [t[1]*Scoef[t[2]]: t in m];
+   l, cc := CanChangeUniverse(c, Z);
+   if l then
+      c := cc;
+   end if;
+
+//"c p:", Parent(c); "c:", c;
+//"m p:", Parent(m); "m:", m;
+
    m1 := [Squot[t[2]]: t in m];
 
    if #m1 gt 2 and m1[1] eq m1[2] then
@@ -1467,10 +1485,7 @@ function ManSymGenListToRep(M,m)
       m1 := m1[cind];
    end if;
 
-   if 1 eq 1 then
-       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
-       A := AmbientSpace(M);
-       A`quot := quot;
+   if USE_NEW_TQuot then
 //"USE MIX:", assigned quot`Tquot_mixed;
        if Type(Tquot) eq Tup then
 	 //"USE MIX";
@@ -1498,6 +1513,7 @@ function ManSymGenListToRep(M,m)
 */
 
 	 dv := dv*RowSubmatrix(X, m2[dind]);
+//"sv:", sv; Parent(sv);
 	 sv := sv*RowSubmatrix(S, [-i: i in m2[sind]]);
 
 /*
@@ -1805,7 +1821,7 @@ function ConvFromModularSymbol(M, Px)
       w := &+[ConvFromModularSymbol_helper(R, V, ZN, Px[i])
                 : i in [1..#Px]];
    end if;
-   return R!w;
+   return R!V!w;
 end function;
 
 
