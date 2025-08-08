@@ -52,19 +52,19 @@ EXAMPLE:
 //                                                            // 
 ////////////////////////////////////////////////////////////////
 
-declare type SetCsp [SetCspElt];
+declare type SetCspG [SetCspGElt];
 
 // nothing yet:
-declare attributes SetCsp:
+declare attributes SetCspG:
   G,
   elements,
   orbit_table,
   coset_list,
   find_coset;
 
-declare type SetCspElt;
+declare type SetCspGElt;
 
-declare attributes SetCspElt:
+declare attributes SetCspGElt:
    parent,
    u, v;
 
@@ -74,11 +74,11 @@ declare attributes SetCspElt:
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-intrinsic CuspsG(G::GrpGL2Hat) -> SetCsp
+intrinsic CuspsG(G::GrpGL2Hat) -> SetCspG
 {The set of cusps in the upper half plane for the group G;
   consists of equivalence classes of the projective rational line under
     the action of G.}
-  cusps := New(SetCsp);
+  cusps := New(SetCspG);
   cusps`G := G;
   cuspList := Cusps(G);
   cusps`elements := [];
@@ -102,18 +102,18 @@ intrinsic CuspsG(G::GrpGL2Hat) -> SetCsp
   return cusps;
 end intrinsic;
 
-TheCusps := New(SetCsp);
+TheCusps := New(SetCspG);
 // we can't do that because PSL2 is not yet defined when this code runs.
 // TheCusps := CuspsG(PSL2(Integers()));
 
-intrinsic Cusps() -> SetCsp
+intrinsic Cusps() -> SetCspG
    {The set of cusps in the upper half plane; consists of the
     rational numbers together with infinity.}
    
    return TheCusps;
 end intrinsic;
 
-intrinsic Group(X::SetCsp) -> GrpGL2Hat
+intrinsic Group(X::SetCspG) -> GrpGL2Hat
 {The group for which this set of cusps is defined.}
    if not assigned X`G then
      X`G := PSL2(Integers());
@@ -121,7 +121,7 @@ intrinsic Group(X::SetCsp) -> GrpGL2Hat
    return X`G;
 end intrinsic;
 
-intrinsic Elements(X::SetCsp) -> GrpGL2Hat
+intrinsic Elements(X::SetCspG) -> GrpGL2Hat
 {.}
   return X`elements;
 end intrinsic;
@@ -133,16 +133,16 @@ procedure Reduce(z)
 end procedure;
 
 
-intrinsic Cusp(u::RngIntElt, v::RngIntElt : Quick:=false) -> SetCspElt
+intrinsic Cusp(u::RngIntElt, v::RngIntElt : Quick:=false) -> SetCspGElt
 {Create the cusp u/v. (The 'Quick' option skips checking that u and v are coprime)}
    if Quick then
-      z := New(SetCspElt);
+      z := New(SetCspGElt);
       z`parent := TheCusps;
       z`u := u;
       z`v := v;
    else
       require u ne 0 or v ne 0 : "One of arguments 1 and 2 must be nonzero.";
-      z := New(SetCspElt);
+      z := New(SetCspGElt);
       z`parent := TheCusps;
       z`u := u; 
       z`v := v;
@@ -152,23 +152,23 @@ intrinsic Cusp(u::RngIntElt, v::RngIntElt : Quick:=false) -> SetCspElt
 end intrinsic;
 
 
-intrinsic Cusp(x::FldRatElt) -> SetCspElt
+intrinsic Cusp(x::FldRatElt) -> SetCspGElt
 {Create the cusp at the given element of P^1(Q)}
    return Cusp(Numerator(x),Denominator(x));
 end intrinsic;
 
 
-intrinsic Cusp(x::RngIntElt) -> SetCspElt
+intrinsic Cusp(x::RngIntElt) -> SetCspGElt
 {"} // "
    return Cusp(x,1);
 end intrinsic;
 
-intrinsic Cusp(x::Infty) -> SetCspElt
+intrinsic Cusp(x::Infty) -> SetCspGElt
 {"} // "
    return Cusp(1,0);
 end intrinsic;
 
-intrinsic Cusp(u::FldRatElt, v::FldRatElt) -> SetCspElt
+intrinsic Cusp(u::FldRatElt, v::FldRatElt) -> SetCspGElt
 {Create the cusp at the given element of P^1(Q)}
  if IsZero(v) then
    return Cusp(Infinity());
@@ -177,7 +177,7 @@ intrinsic Cusp(u::FldRatElt, v::FldRatElt) -> SetCspElt
  end if;
 end intrinsic;
 
-intrinsic Cusp(v::ModTupRngElt[FldRat]) -> SetCspElt
+intrinsic Cusp(v::ModTupRngElt[FldRat]) -> SetCspGElt
 {Create the cusp at the given element of P^1(Q)}
  require Degree(v) eq 2 : "Vector must be of length 2.";
  return Cusp(v[1], v[2]);
@@ -189,10 +189,10 @@ end intrinsic;
 //                                                            // 
 ////////////////////////////////////////////////////////////////
 
-intrinsic IsCoercible(X::SetCsp,x::.) -> BoolElt, SetCspElt
+intrinsic IsCoercible(X::SetCspG,x::.) -> BoolElt, SetCspGElt
    {}
    case Type(x):
-      when SetCspElt:
+      when SetCspGElt:
          y := Cusp(x`u, x`v);
          y`parent := X;
          // for better visibility
@@ -224,7 +224,7 @@ intrinsic IsCoercible(X::SetCsp,x::.) -> BoolElt, SetCspElt
 end intrinsic;
 
 /*
-intrinsic IsCoercible(X::SetCspElt,x::.) -> BoolElt, SetCspElt
+intrinsic IsCoercible(X::SetCspGElt,x::.) -> BoolElt, SetCspGElt
 {}
    return true, Parent(X)!x;
 end intrinsic;
@@ -236,13 +236,13 @@ end intrinsic;
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-intrinsic Print(X::SetCsp, level::MonStgElt)
+intrinsic Print(X::SetCspG, level::MonStgElt)
    {}
    printf "Set of cusps for the group %o", Group(X);
 end intrinsic;
 
 
-intrinsic Print(x::SetCspElt, level::MonStgElt)
+intrinsic Print(x::SetCspGElt, level::MonStgElt)
    {}
    printf "%o", x`v eq 0 select "oo" else x`u/x`v;
 end intrinsic;
@@ -255,25 +255,25 @@ end intrinsic;
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-intrinsic 'in'(x::., X::SetCsp) -> BoolElt
+intrinsic 'in'(x::., X::SetCspG) -> BoolElt
    {Returns true if x is in X.}
-   if Type(x) eq SetCspElt then
+   if Type(x) eq SetCspGElt then
       return x`parent eq X;
    end if;
    return false;
 end intrinsic;
 
-intrinsic Parent(x::SetCspElt) -> SetCsp
+intrinsic Parent(x::SetCspGElt) -> SetCspG
    {}
    return x`parent;
 end intrinsic;
 
-intrinsic 'eq' (X::SetCsp,Y::SetCsp) -> BoolElt
+intrinsic 'eq' (X::SetCspG,Y::SetCspG) -> BoolElt
    {}
    return Group(X) eq Group(Y);
 end intrinsic;
 
-intrinsic 'eq' (x::SetCspElt,y::SetCspElt) -> BoolElt
+intrinsic 'eq' (x::SetCspGElt,y::SetCspGElt) -> BoolElt
    {}
    if (x`parent ne y`parent) then return false; end if;
    X := x`parent;
@@ -296,7 +296,7 @@ end intrinsic;
 //                                                            //
 ////////////////////////////////////////////////////////////////
 
-intrinsic Eltseq(x::SetCspElt) -> SeqEnum
+intrinsic Eltseq(x::SetCspGElt) -> SeqEnum
    {For internal use}
    return [x`u, x`v];
 end intrinsic;
@@ -309,7 +309,7 @@ end intrinsic;
 ////////////////////////////////////////////////////////////////
 
 
-intrinsic '*'(alpha::GrpMatElt[FldRat], x::SetCspElt) -> SetCspElt
+intrinsic '*'(alpha::GrpMatElt[FldRat], x::SetCspGElt) -> SetCspGElt
 {Computes the action of alpha on x.}
  Q := Rationals();
  vec := ChangeRing(Vector(Eltseq(x)), Q);
@@ -321,7 +321,7 @@ end intrinsic;
 // say insist that the determinant be d?
 // Not sure, but a least we can insist of it being with positive det
 
-intrinsic getCuspGaloisAction(d::RngIntResElt, x::SetCspElt) -> AlgMatElt
+intrinsic getCuspGaloisAction(d::RngIntResElt, x::SetCspGElt) -> AlgMatElt
 {Compute the action of zeta->zeta^d on x.}
   N := Modulus(Parent(d));
   assert N eq Level(Group(Parent(x)));
@@ -362,7 +362,7 @@ intrinsic getCuspGaloisAction(d::RngIntResElt, x::SetCspElt) -> AlgMatElt
 end intrinsic;
 
 // Galois action of the automorphism sending zeta to zeta^d
-intrinsic '*'(d::RngIntResElt, x::SetCspElt) -> SetCspElt
+intrinsic '*'(d::RngIntResElt, x::SetCspGElt) -> SetCspGElt
 {Compute the action of zeta->zeta^d on x.}
   mat := getCuspGaloisAction(d, x);
 //  final_res := Eltseq(Vector(Eltseq(x))*Transpose(mat));
@@ -371,17 +371,17 @@ intrinsic '*'(d::RngIntResElt, x::SetCspElt) -> SetCspElt
   return Parent(x)!(mat*Parent(x)![1,0]);
 end intrinsic;
 
-intrinsic '*'(d::RngIntResElt, S::SetEnum[SetCspElt]) -> SetCspElt
+intrinsic '*'(d::RngIntResElt, S::SetEnum[SetCspGElt]) -> SetCspGElt
 {Compute the action of zeta->zeta^d on x.}
   return {d*x : x in S};
 end intrinsic;
 
-intrinsic '#'(X::SetCsp) -> RngIntElt
+intrinsic '#'(X::SetCspG) -> RngIntElt
 {Size of the set.}
   return #Elements(X);
 end intrinsic;
 
-intrinsic GaloisOrbit(s::SetCspElt) -> SeqEnum[SetCspElt], SeqEnum[RngIntRes]
+intrinsic GaloisOrbit(s::SetCspGElt) -> SeqEnum[SetCspGElt], SeqEnum[RngIntRes]
 {Return the orbit of the cusp s under the Galois action of the cyclotomic
     field Q(zeta_N), identified with (Z/NZ)^*. }
   orbit := [s];
@@ -405,7 +405,7 @@ intrinsic GaloisOrbit(s::SetCspElt) -> SeqEnum[SetCspElt], SeqEnum[RngIntRes]
   return orbit, actions;
 end intrinsic;
 
-intrinsic GaloisOrbits(X::SetCsp) -> SeqEnum
+intrinsic GaloisOrbits(X::SetCspG) -> SeqEnum
 {Returns all orbits of X under the Galois action of the cyclotomic field.}
   if #X eq 0 then
     return [];

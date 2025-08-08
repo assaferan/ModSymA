@@ -1339,7 +1339,7 @@ intrinsic IsCoercible(M::ModSymA,x::.) -> BoolElt, ModSymAElt
                   return false, "The polynomial part is not homogeneous of degree " 
                        cat IntegerToString(Weight(M)-2) cat ".";
                end if; 
-               if Type(Universe(a[2])) eq SetCsp then
+               if Type(Universe(a[2])) eq SetCspG then
                   cusp1, cusp2 := Explode(a[2]);
                else
                   cusp1, cusp2 := MakeCusps(a[2]);
