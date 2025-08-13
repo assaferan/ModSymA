@@ -169,7 +169,7 @@ intrinsic InnerTwistOperator(M::ModSymA, chi::GrpDrchAElt) -> AlgMatElt
    phi_Q := FieldAutomorphismMatrix(Amb, phi);  
 
    vprint ModularSymbols : "Automorphism is ", aut, " which has order ", Order(phi_Q), " and charpoly ", 
-               Factorization(MyCharPoly(phi_Q));
+               Factorization(CharacteristicPolynomial(phi_Q));
 
    A_Q := RestrictionOfScalars(A);
    T := phi_Q*A_Q;
@@ -273,7 +273,7 @@ function RestrictToQ_and_Change_By_Automorphism(M, chi, A)
    phi_Q := FieldAutomorphismMatrix(M, phi);  
 
    vprint ModularSymbols : "Automorphism is ", aut, " which has order ", Order(phi_Q), " and charpoly ", 
-               Factorization(MyCharPoly(phi_Q));
+               Factorization(CharacteristicPolynomial(phi_Q));
 
    A_Q := RestrictionOfScalars(A);
    return phi_Q*A_Q;

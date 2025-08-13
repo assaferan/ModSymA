@@ -132,7 +132,7 @@ import "arith.m"  :   DotProd,
 import "../Box.m" : BoxMethod, qExpansions;
 
 import "linalg.m" :   EchelonPolySeq,
-                      MyCharPolyP,
+                      MyCharpoly,
                       Pivots,
                       Restrict,
                       SaturatePolySeq,
@@ -1306,6 +1306,52 @@ function QuickIrredTest(X : e := 1)
     return Degree(f)*e eq n;
 
 end function;
+ 
+function my_ev_before_lift(A, M)
+  use_quick := t in {RngInt, FldRat} or ISA(t, FldAlg) where t is Type(BaseRing(A));
+  N := Level(M);
+  p := SmallestPrimeNondivisor(N, 2);
+  T := Restrict(ChangeRing(DualHeckeOperator(M, p), BaseRing(A)), A);
+
+  i := 1;
+  str := "T_" * IntegerToString(p);
+  while true do
+      vprintf ModularSymbols, 2:
+      "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
+      if use_quick then
+          if QuickIrredTest(T) then
+               vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
+               vtime ModularSymbols, 2:
+               f := CharacteristicPolynomial(T);
+               // assert IsIrreducible(f);
+               break;
+          end if;
+      else
+          f := CharacteristicPolynomial(T);
+          if IsIrreducible(f) then
+              break;
+          end if;
+      end if; 
+
+      if i eq 15 then
+        "WARNING: it seems hard to find an irreducible element in the Hecke algebra.";
+    if Characteristic(BaseRing(A)) gt 0 then
+           "In characteristic p, the algorithm is not guaranteed to terminate.";
+        end if;
+      end if;
+
+      p := SmallestPrimeNondivisor(N, NextPrime(p));
+      rand := Random([-1,1]);
+      T +:= rand*Restrict(DualHeckeOperator(M,p),A);
+      str *:= " + " * IntegerToString(rand) * "*T_" * IntegerToString(p);
+      i +:= 1;
+  end while;
+   
+  IndentPop();
+  vprintf ModularSymbols,1: 
+      "Irreducible element of Hecke algebra (of dimension %o) is %o\n", Dimension(A),str;
+  return EigenvectorOfMatrixWithCharpoly(T,f);
+end function;
 
 function FindIrreducibleHeckeOperator(A : e := 1)
    // Find a linear combination of Hecke operators whose
@@ -1356,14 +1402,30 @@ function FindIrreducibleHeckeOperator(A : e := 1)
         "Irreducible element of Hecke algebra (of dimension %o) is %o\n", Dimension(A),str;
     return T, f;
 
-end function; 
+end function;
+ 
 
 function EigenvectorBeforeLift(A : e := 1)
    T, f := FindIrreducibleHeckeOperator(A : e := e);
    return EigenvectorOfMatrixWithCharpoly(T,f : e := e);
 end function;
 
-function EigenvectorModSymA(A : e := 1, dual := true)
+function my_eigenvector(A, M)
+   // Returns an eigenvector of the Hecke algebra on A over
+   // a polynomial extension of the ground field.
+   // The eigenvector lies in DualSpace(A) tensor Qbar
+   e := my_ev_before_lift(A, M);
+   F := Parent(e[1]);
+   V := RSpace(F,Degree(A));
+   B := Basis(A);
+   sum := V!0;
+   for i := 1 to #B do
+      sum +:= e[i]*V!B[i];
+   end for;
+   return sum;
+end function;
+
+function EigenvectorModSymA(A : e := 1)
    // Returns an eigenvector of the Hecke algebra on A over
    // a polynomial extension of the ground field.
    // The eigenvector lies in DualSpace(A) tensor Qbar.
@@ -1373,7 +1435,7 @@ function EigenvectorModSymA(A : e := 1, dual := true)
       V := RSpace(F,Degree(A));
       // B := [V!b : b in Basis(DualRepresentation(A))];
       // A`eigen := &+[eig[i]*B[i] : i in [1..#B]];
-      B := Basis(dual select DualRepresentation(A) else A);
+      B := Basis(DualRepresentation(A));
       sum := V!0;
       for i := 1 to #B do
           sum +:= eig[i]*V!B[i];
@@ -1586,7 +1648,7 @@ Q instead of a cyclotomic extension of Q.}
       inc := hom<C -> L | L.1>;
    end if;
 
-   //f2 := MyCharPoly(L.1);   
+   //f2 := CharacteristicPolynomial(L.1);   
    W := VectorSpace(RationalField(), Degree(C)*Dimension(M));
    V2 := [W|&cat[Eltseq(e) : e in Eltseq(v)] : v in V];
    R := Domain(phi);
@@ -2091,8 +2153,7 @@ function find_echelon_forms_vecs(M)
   decomp := [hol_forms meet ChangeRing(DualVectorSpace(d),F) : d in D];
   // This doesn't always work, because this is up to automorphism
   eigenvecs := Matrix(&cat[get_eigenvector_galois_orbit(
-                         //my_eigenvector(d,M),
-                         EigenvectorModSymA(d : e := d`multiplicity),
+                         my_eigenvector(d,M),
                          F) : d in decomp]);
   K := BaseRing(eigenvecs);
   Embed(BaseRing(I), K, K.1);

@@ -483,7 +483,7 @@ end intrinsic;
    S := [ p : p in [3..maxp] | 
                IsPrime(p) and Level(A) mod p ne 0];
    seq := [Integers()|Evaluate(
-            MyCharPoly(HeckeOperator(A, p) : 
+            CharacteristicPolynomial(HeckeOperator(A, p) : 
                                               Al := "pAdic"), p+1) 
                    : p in S];
    bound := Gcd(seq);
@@ -538,7 +538,7 @@ intrinsic CharpolyOfFrobenius(M::ModSymA, p::RngIntElt) -> RngUPolElt
    require BaseRing(Parent(eps)) eq BaseRing(Parent(MinimalBaseRingCharacter(eps))) : 
         "The Dirichlet character eps attached to M must be defined over Q(eps).";
 
-   Gp := MyCharPoly(HeckeOperator(M,p));
+   Gp := CharacteristicPolynomial(HeckeOperator(M,p));
 
    if Sign(M) eq 0 then
       Gp := Sqrt(Gp);
