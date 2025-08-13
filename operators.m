@@ -191,7 +191,8 @@ import "core.m":
    ManinSymbolsGeneralizedWeightedAction,
    ModularSymbolsBasis,
    P1GeneralizedWeightedAction,
-   UnwindManinSymbol;
+   UnwindManinSymbol,
+   ManSymGenListToRep;
 
 import "dims.m": 
    idxG0, 
@@ -221,6 +222,7 @@ forward
    Heilbronn,
    TnSparse;
 
+Z := IntegerRing();
 
 /*********************************************************
  *                                                       *
@@ -907,9 +909,25 @@ function GetBadDoubleCosetRepresentatives(G,p)
     return final_list;
 end function;
 
+declare attributes GrpGL2Hat: HeckeGCR;
 
 function HeckeGeneralCaseRepresentatives(G,p : Squared := false)
   N := Level(G);
+
+// "CALl HeckeGeneralCaseRepresentatives:"; G; TES(G); "p:", p; 
+
+  if assigned G`HeckeGCR then
+       A := G`HeckeGCR;
+       if IsDefined(A, p) then
+//"REUSE HeckeGCR";
+	   return A[p];
+       end if;
+       delete G`HeckeGCR;
+  else
+       A := AssociativeArray();
+  end if;
+
+
   GL2Q := GL(2, Rationals());
   if N mod p eq 0 then
       alphas := GetBadDoubleCosetRepresentatives(G,p);
@@ -923,6 +941,10 @@ function HeckeGeneralCaseRepresentatives(G,p : Squared := false)
   end if;
   R := &cat [HeckeGeneralCaseRepresentativesDoubleCoset2(G, GL2Q!Eltseq(alpha))
 							: alpha in alphas];
+
+  A[p] := R;
+  G`HeckeGCR := A;
+
   return R;
 end function;
 
@@ -1025,24 +1047,115 @@ function HeckeOperatorDirectlyOnModularSymbols(M,p : Squared := false)
    return &+[ActionOnModularSymbolsBasis(g,M) : g in R];
 end function;
 
-function ManinSymbolsAction2(defining_tuple, uv, Heil)
-  G := defining_tuple[1];
-  det := defining_tuple[2];
-  Tquot := defining_tuple[3];
-  Squot := defining_tuple[4];
-  Scoef := defining_tuple[5];
-  eps := defining_tuple[6];
-  res := Universe(Tquot)!0;
-  phi, phi_data := get_phi(G, det);
-  for mat in Heil do
-    uvM := Parent(mat)!Eltseq(uv) * mat;
-    ind, s := phi(uvM, phi_data);
-    if ind ne 0 then
-      e := s@eps;
-      res +:= e*Scoef[ind]*Tquot[Squot[ind]];
-    end if;
-  end for;
-  return res;
+function OrigManinSymbolsAction2(defining_tuple, uv, Heil)
+
+/*
+//"*** ManinSymbolsAction2";
+//"defining_tuple:", defining_tuple; Parent(defining_tuple);
+"uv:", uv; //Parent(uv);
+"#Heil:", #Heil;
+//"Heil:", Heil; Parent(Heil);
+*/
+
+  /*
+  uv: 2x2 mat in MatrixGroup(2, IntegerRing(N))
+  #Heil: 4 (N=7), seq of 2x2 mats in Full Mat Alg, deg 2 over IntegerRing(N)
+
+  phi: function(mat, G) ... end function
+      [get_general_phi if not get_Cartan_phi]
+  phi_data: Arithmetic subgroup of PSL2 induced by MatrixGroup(2, N)...
+  */
+
+  G := defining_tuple[1]; //Power Structure of GrpGL2Hat
+  det := defining_tuple[2]; //Integer Ring
+  Tquot := defining_tuple[3]; //Seq over modtuple [Q]
+  Squot := defining_tuple[4]; //Seq over Z
+  Scoef := defining_tuple[5]; //Seq over Q
+  eps := defining_tuple[6];   //Group of characters of domain Sym(2)
+M := defining_tuple[7];
+
+  if IsTrivial(eps) then
+
+// ###
+     phi, phi_data := get_phi(G, det: TrivialChar);
+// "phi:", phi; "phi_data:", phi_data;
+     res := Universe(Tquot)!0;
+
+if 1 eq 1 then
+   m := [];
+   for mat in Heil do
+      uvM := Parent(mat)!Eltseq(uv) * mat;
+      ind := phi(uvM, phi_data);
+      Append(~m, <1, ind>);
+   end for;
+   res := ManSymGenListToRep(M, m);
+else
+     for mat in Heil do
+       uvM := Parent(mat)!Eltseq(uv) * mat;
+       ind := phi(uvM, phi_data);
+// printf "    ind: %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
+       if ind ne 0 then
+	 res +:= Scoef[ind]*Tquot[Squot[ind]];
+       end if;
+     end for;
+end if;
+
+//"res Sup:", Support(res);
+     return res;
+
+  else
+
+     phi, phi_data := get_phi(G, det);
+// "phi:", phi; "phi_data:", phi_data;
+     res := Universe(Tquot)!0;
+     for mat in Heil do
+       uvM := Parent(mat)!Eltseq(uv) * mat;
+       ind, s := phi(uvM, phi_data);
+// printf "    ind: %o, c %o, sup %o\n", ind, Scoef[ind], Support(Tquot[Squot[ind]]);
+       if ind ne 0 then
+	 e := s@eps;
+	 res +:= e*Scoef[ind]*Tquot[Squot[ind]];
+       end if;
+     end for;
+//"res Sup:", Support(res);
+     return res;
+
+  end if;
+end function;
+
+TEST := 0 eq 1;
+
+has_inner, inner := IsIntrinsic("_ManinSymbolsAction2");
+if not has_inner then inner := 0; end if;
+
+function GetManinSymbolsAction2(defining_tuple)
+
+   eps := defining_tuple[6];
+   if not has_inner or not IsTrivial(eps) then
+      return OrigManinSymbolsAction2;
+   end if;
+
+   if not TEST then
+      return inner;
+   end if;
+
+   function ManinSymbolsAction2(defining_tuple, uv, Heil)
+      w0 := OrigManinSymbolsAction2(defining_tuple, uv, Heil);
+      w := inner(defining_tuple, uv, Heil);
+      if w ne w0 then
+	 "BAD inner ManinSymbolsAction2";
+	 "defining_tuple:", defining_tuple;
+	 "defining_tuple:", uv;
+	 "#Heil:", #Heil;
+	 "old res:", w0;
+	 "new res:", w;
+	 error "FAIL";
+      end if;
+"GOOD!";
+      return w;
+   end function;
+   return ManinSymbolsAction2;
+
 end function;
 
 
@@ -1077,6 +1190,63 @@ end function;
 procedure Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action)
 
    Tquot := quot`Tquot;
+
+//printf "Get_Tquot: #Tquot: %o, width: %o, dist: %o\n",
+//    #Tquot, Ncols(Tquot[1]), {* Weight(v): v in Tquot *};
+
+   if 1 eq 1 then
+	RATIO := 0.3;
+//"Here quot:"; TES(quot);
+	if assigned quot`Tquot_mixed then
+//"REUSE MIXED";
+	    Tquot := quot`Tquot_mixed;
+	else
+	    l := #Tquot;
+	    V := Universe(Tquot);
+	    n := Degree(V);
+	    rw := [Weight(v): v in Tquot];
+	    limit := RATIO*n;
+	    map := [];
+	    dl := [];
+	    sl := [];
+	    for i := 1 to l do
+		w := Weight(Tquot[i]);
+		if w ge limit then
+		    Append(~dl, i);
+		    Append(~map, #dl);
+		else
+		    Append(~sl, i);
+		    Append(~map, -#sl);
+		end if;
+	    end for;
+	    X := Matrix(Tquot[dl]);
+	    S := SparseMatrix(Matrix(Tquot[sl]));
+
+//"Tquot:", Tquot;
+	       Scoef := ChangeUniverse(quot`Scoef, Z);
+	       Tquot := ChangeUniverse(Tquot, ChangeRing(Universe(Tquot), Z));
+	       XX := Matrix(Z, X);
+	       SS := SparseMatrix(Z, S);
+	       X := XX;
+	       S := SS;
+	       quot`Scoef := Scoef;
+	       quot`Tquot := Tquot;
+"Move to Z:", Parent(X); S;
+V;
+	    try x:=1;
+	    catch e
+"FAIL Move to Z:",
+Parent(X); S;
+"Scoef:", Scoef;
+
+	    end try;
+	    Tquot := <map, X, S, V>;
+//"Mixed Tquot:", Tquot;
+//printf "Mixed Tquot: n: %o, l: %o, X: %o by %o (d %.3o), sp: %o (d %.3o)\n",
+//    n, l, Nrows(X), Ncols(X), Density(X), S, Density(S);
+	    quot`Tquot_mixed := Tquot;
+	end if;
+   end if;
 
    CallP1Action2 := P1Action;
    CallP1Action := P1Action;
@@ -1209,12 +1379,13 @@ end function;
 
 
 
-function lev1_TnSparse(M, Heil, sparsevec)
+function lev1_TnSparse(M, Heil, sparsevec: Singletons := false)
    assert Type(M) eq ModSymA;
    assert Type(Heil) in {RngIntElt, Tup};
    assert Type(sparsevec) eq SeqEnum;
 
    if Dimension(M) eq 0 then
+      assert not Singletons;
       return VectorSpace(M)!0;
    end if;
 
@@ -1265,6 +1436,36 @@ function lev1_TnSparse(M, Heil, sparsevec)
 
    R := PolynomialRing(BaseField(M)); x := R.1;
    if IsOfGammaType(M) then
+       call_action := func<i |
+	  P1GeneralizedWeightedAction(
+	    generating_coset_list[i], generating_weights[i],
+	    k, coset_list, Tquot, my_phi, my_coeff, modNHeil, char0Heil,
+	    eps, R, 1)
+       >;
+   else
+     // phiG := get_phi(LevelSubgroup(M));
+     G := LevelSubgroup(M);
+     call_action := func<i |
+         lev1_ManinSymbolsGeneralizedWeightedAction(
+	    generating_coset_list[i],
+	    generating_weights[i],
+	    k, coset_list, Tquot,
+	    my_phi, my_coeff,
+	    modNHeil, char0Heil,
+	    eps,
+	    R,
+	    1, G)
+	>;
+   end if;
+
+   if Singletons then
+       ans := &+[call_action(i): i in sparsevec];
+   else
+       ans := &+[m[1] * call_action(m[2]): m in sparsevec];
+   end if;
+
+/*
+   if IsOfGammaType(M) then
      ans :=  &+[ m[1]* P1GeneralizedWeightedAction(generating_coset_list[m[2]],
                                generating_weights[m[2]],
                                k, coset_list, Tquot,
@@ -1288,6 +1489,7 @@ function lev1_TnSparse(M, Heil, sparsevec)
 			       1, G) :
                 m in sparsevec];
    end if;
+*/
 
    if GetVerbose("ModularSymbols") eq 3 then
       printf " (%o s).\n", Cputime(t);
@@ -1341,23 +1543,30 @@ function HeckeOperatorHeilbronn(M, Heil)
 
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
-      defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
+      M`quot := quot;
+      defining_tuple := <coset_list, Tquot, Squot, Scoef, eps>;
    else
       Tquot := quot`Tquot;
+// ###
+// Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+// M`quot := quot;
 
-      CallP1Action2 := ManinSymbolsAction2;
-      CallP1Action := ManinSymbolsAction;
       G := LevelSubgroup(M);
       // find_coset := M`mlist`find_coset;
       num_cosets := #M`mlist`coset_list;
       //phi := get_phi(G);
       // defining_tuple := <phi, num_cosets, Tquot, Squot, Scoef> ;
       param :=  Weight(M) eq 2 select det else num_cosets;
-      defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+      //defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+
+      defining_tuple :=
+	 <G, param, Tquot, Squot, Scoef, eps, M, G`DetRep`DetMapInfo,
+	    G`FindCosetQ`FindCosetQTMap>;
+
+      CallP1Action2 := GetManinSymbolsAction2(defining_tuple);
+      CallP1Action := ManinSymbolsAction;
    end if;
 
-   Append(~defining_tuple, eps);
- 
    if Weight(M) eq 2 then
 	 T := [ CallP1Action2(defining_tuple, uv, modNHeil) : 
 		      uv in generating_coset_list
@@ -1370,14 +1579,20 @@ function HeckeOperatorHeilbronn(M, Heil)
 	      ];
    end if; 
 
-   return MatrixAlgebra(BaseField(M),Dimension(M))!T;
+//"Par T:", Parent(T); "BF:", BaseField(M);
+
+   return MatrixAlgebra(BaseField(M),Dimension(M))!Matrix(T);
 end function;
 
 
-function TnSparse(M, Heil, sparsevec)
+function TnSparse(M, Heil, sparsevec: Singletons := false)
 
    if #sparsevec eq 0 then
-      return VectorSpace(M)!0;
+      V := VectorSpace(M);
+      if Singletons then
+	return [V |];
+      end if;
+      return V!0;
    end if;
 
 /* This now returns for the case not of Gamma type!
@@ -1426,10 +1641,11 @@ function TnSparse(M, Heil, sparsevec)
 
    // Now consider the characteristic-zero case.
    if Level(M) eq 1 then
-      return lev1_TnSparse(M,Heil,sparsevec);
+      return lev1_TnSparse(M,Heil,sparsevec: Singletons := Singletons);
    end if;
 
    if Dimension(M) eq 0 then
+      assert not Singletons;
       return VectorSpace(M)!0;
    end if;
 
@@ -1479,23 +1695,28 @@ function TnSparse(M, Heil, sparsevec)
 
    if IsOfGammaType(M) then
       Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
-      defining_tuple := <coset_list, Tquot, Squot, Scoef> ;
+      M`quot := quot;
+      defining_tuple := <coset_list, Tquot, Squot, Scoef, eps>;
    else
       Tquot := quot`Tquot;
 
-      CallP1Action2 := ManinSymbolsAction2;
-      CallP1Action := ManinSymbolsAction;
+//"P TQ:", Parent(Tquot); "TQ:", Tquot;
       G := LevelSubgroup(M);
       // find_coset := M`mlist`find_coset;
       num_cosets := #M`mlist`coset_list;
 //phi := get_phi(G);
       //    defining_tuple := <phi, num_cosets, Tquot, Squot, Scoef> ;
       param :=  Weight(M) eq 2 select det else num_cosets;
-      defining_tuple := <G, param, Tquot, Squot, Scoef> ;
+
+      defining_tuple :=
+	 <G, param, Tquot, Squot, Scoef, eps, M, G`DetRep`DetMapInfo,
+	    G`FindCosetQ`FindCosetQTMap>;
+
+      //CallP1Action2 := ManinSymbolsAction2;
+      CallP1Action2 := GetManinSymbolsAction2(defining_tuple);
+      CallP1Action := ManinSymbolsAction;
    end if;
 
-   Append(~defining_tuple, eps);
-    
    if Weight(M) eq 2 then
 
 	 /*
@@ -1507,6 +1728,7 @@ function TnSparse(M, Heil, sparsevec)
 
 	 ans := 0;
          for m in sparsevec do
+//Parent(defining_tuple);
 	     mat := m[1]*CallP1Action2(
 		 defining_tuple, generating_coset_list[m[2]], modNHeil
 	     );
@@ -1873,7 +2095,20 @@ function FastTnData(M, V)
 
 
    n := #V;
-   B := Basis(sub<Representation(AmbientSpace(M))|V>);
+   if 1 eq 1 then
+      repeat
+	 p := PreviousPrime(Random(2^23, 11863279));
+	 K := GF(p);
+	 try
+	    B := Basis(Rowspace(Matrix(K, Matrix(V))));
+	 catch e
+	    B := [];
+	 end try;
+      until #B eq n;
+   else
+      B := Basis(sub<Representation(AmbientSpace(M))|V>);
+   end if;
+
    assert #B eq n;
    // Find pivot columns.
    e := Pivots(B);
@@ -1882,10 +2117,17 @@ function FastTnData(M, V)
    VE    := RMatrixSpace(BaseField(M),n,n)!
                [V[i][e[j]] : j in [1..n], i in [1..n]];
    VEinv := VE^(-1);
+
+   l, C := CanChangeRing(VEinv, Z);
+   if l then
+      VEinv := C;
+   end if;
    
    return rec<CFastData| V:=V, e:=e, VEinv:=VEinv>;
 end function;
 
+
+empty := [**];
 
 function FastTn(M, V, n)
    assert IsAmbientSpace(M);
@@ -1894,20 +2136,106 @@ function FastTn(M, V, n)
       Tn := DualHeckeOperator(M,n);
       return Restrict(Tn,V);
    end if;
+
    // Compute action of Transpose(Tn) on the Hecke-stable subspace V.
    FastData := FastTnData(M, Basis(V));
-   H     := Heilbronn(M,n,false);
    F     := BaseField(M);
    V     := FastData`V;
-   n     := #V;
-   m     := Dimension(AmbientSpace(M));
    e     := FastData`e;
-   VEinv := FastData`VEinv;
+
+/*
+"HERE M:", M;
+"HERE orig n:", n;
+"HERE e:", e;
+"HERE #e:", #e;
+*/
+
+   TE := 0;
+   if assigned M`TnSparse_data then
+      A := M`TnSparse_data;
+      M`TnSparse_data := 0;
+   else
+      A := AssociativeArray();
+   end if;
+
+   if IsDefined(A, n) then
+      q := A[n];
+      A[n] := empty;
+   else
+      q := [* 0: j in [1 .. Dimension(M)] *];
+   end if;
+
+//"stored:", [j: j in [1..Dimension(M)] | q[j] cmpne 0];
+   TE := [];
+   for j in e do
+      v := q[j];
+      if v cmpeq 0 then
+	 H := Heilbronn(M,n,false); // store!
+	 v := TnSparse(M, H, [<1,j>]);
+	 q[j] := v;
+//"    new j", j;
+      end if;
+      Append(~TE, v);
+   end for;
+   A[n] := q;
+   M`TnSparse_data := A;
+   //TE := A[n][e];
+   if 0 eq 1 then
+      "REUSE TE:", TE;
+      H := Heilbronn(M,n,false);
+      old := [TnSparse(M, H, [<1,e[i]>]) : i in [1..#e]];
+      "OLD TE:", old;
+      assert old eq TE;
+   end if;
+
+   /*
+   if TE cmpeq 0 then
+      H := Heilbronn(M,n,false);
+"HERE #H, Hash(H):", #H, Hash(H);
+      TE := [TnSparse(M, H, [<1,e[i]>]) : i in [1..#e]];
+      A[n] := TE;
+"STORE FOR", e;
+      M`TnSparse_data := A;
+   end if;
+   */
+
    // The next step is where all of the time is spent. 
-   TE    := [TnSparse(M, H, [<1,e[i]>]) : i in [1..n]];
+
+   m     := Dimension(AmbientSpace(M));
+   n     := #V;
    Vmat  := RMatrixSpace(F, n, m) ! V;
-   TEmat := RMatrixSpace(F, n, m) ! TE;
-   return  MatrixAlgebra(F,n)!Eltseq(Vmat*Transpose(TEmat)*VEinv);
+
+//"HERE V dim:", #V;
+//"HERE TE:", TE;
+//"n:", n;
+//"m:", m;
+
+   //TEmat := RMatrixSpace(F, n, m) ! TE;
+   TEmat := Matrix(TE);
+   TEmat := Transpose(TEmat);
+   VEinv := FastData`VEinv;
+
+   // Do RHS prod first, since typically entries smaller on RHS:
+//"mat pars:", Parent(TEmat); Parent(VEinv); "VEinv:", Set(Eltseq(VEinv));
+
+   l, C := CanChangeRing(TEmat, Z);
+   if l then
+      TEmat := C;
+   end if;
+
+   return  Matrix(Vmat*(TEmat*VEinv));
+
+"VMat:", Parent(Vmat); Density(Vmat);
+"TEmat:", Parent(TEmat); Density(TEmat);
+"VEinv:", Parent(VEinv); Density(VEinv);
+"p1 density:", Density(Vmat*TEmat);
+"p2 density:", Density(TEmat*VEinv);
+"p12 density:", Density(Vmat*TEmat*VEinv);
+"p1:", Vmat*TEmat;
+"p2:", TEmat*VEinv;
+"p3:", Matrix(Vmat*TEmat*VEinv);
+
+   return  Matrix(Vmat*TEmat*VEinv);
 end function;
 
 
@@ -1920,7 +2248,7 @@ Note that DualHeckeOperator(M,n) is not guaranteed to equal the
 transpose of HeckeOperator(M,n).}
    require not assigned M`al_decomp or GCD(n,Level(M)) eq 1 : 
     "Hecke operators of index not coprime to the level are not defined on Atkin-Lehner factors.";
-
+//"DualHeckeOperator M:", M; "Amb:", AmbientSpace(M); "n:", n;
    requirege n,1;
    if IsAmbientSpace(M) then
       return Transpose(HeckeOperator(M,n));
@@ -1933,8 +2261,9 @@ transpose of HeckeOperator(M,n).}
                               | M`dual_hecke_operator[i][1] eq n } then
       return M`dual_hecke_operator[i][2];
    end if;
-   vprintf ModularSymbols : "Computing T_%o on dual space of dimension %o.\n",
+   vprintf ModularSymbols: "Computing T_%o on dual space of dimension %o.\n",
                           n, Dimension(M);
+   vtime ModularSymbols:
    if n eq 1 then
 
       T := MatrixAlgebra(BaseField(M),Dimension(M))!1;
@@ -2123,14 +2452,14 @@ the conductor of the Dirichlet character.}
          F[r,c+n] := ComplexConjugate(A[r,c]);
       end for;
    end for;
-print "FCP(F) = ", Factorization(CharacteristicPolynomial(F));
+print "FCP(F) = ", Factorization(MyCharPoly(F));
 */
    
          phi_Q := FieldAutomorphismMatrix(AmbientSpace(M), ComplexConjugate);  
          A_Q := RestrictionOfScalars(A);
          A := phi_Q*A_Q;
 //print "A = ", A;
-//print "FCP(A) = ", Factorization(CharacteristicPolynomial(A));
+//print "FCP(A) = ", Factorization(MyCharPoly(A));
          Append(~M`atkin_lehner, <q,A>);
       end if;
    end if;

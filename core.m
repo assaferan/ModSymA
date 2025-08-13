@@ -139,7 +139,9 @@ import "linalg.m" : Pivots;
 
 import "multichar.m" : MC_ConvToModularSymbol, 
                        MC_ManinSymToBasis,
-                       MC_ModSymAToBasis;;
+                       MC_ModSymAToBasis;
+
+import "operators.m" : Get_Tquot;
 
 /* ZZ Dangerous bend ZZ
    The code in this files lies at the very core of all of the other modular
@@ -175,6 +177,7 @@ forward convergent,
         UnwindManinSymbol,
         WindManinSymbol;
 
+Z := IntegerRing();
 
 /************************************************************************
  *                                                                      *
@@ -200,7 +203,8 @@ CQuotient := recformat<
                   //   out the S-quotient by the T-relations. 
        Tquot,     // * The i-th Sgen is equal to Tquot[i], which
                   //   is a vector on Tgens. 
-       Tquot_scaled, scalar	// Scaled version over rationals
+       Tquot_scaled, scalar,	// Scaled version over rationals
+       Tquot_mixed // mixed dense/sparse
 >;
 
 // The standard manin symbols list.
@@ -239,7 +243,6 @@ CManSymGenList := recformat<
 /*
 // This is now in the C.
 function P1Normalize(x) 
-   Z := IntegerRing();
    u := x[1];
    v := x[2];
    R := Parent(u);
@@ -415,7 +418,17 @@ end function;
 function ManinSymbolGenList(k,G,F)
    // coset_list := [c : c in Codomain(Components(G`FindCoset)[1])];
    // find_coset := G`FindCoset;
-   find_coset := GetFindCoset(G);
+   find_coset, find_cosetq := GetFindCoset(G);
+
+/*
+"ManinSymbolGenList find_coset:", find_coset;
+comp := (Components(find_coset)[1]);
+"comp:", comp;
+"NEW TES:"; TES(comp);
+"codom:", Codomain(comp);
+"NEW G TES:"; TES(G);
+*/
+
    coset_list := [c : c in Codomain(Components(find_coset)[1])];
    n      := (k-1)*#coset_list;
    R<X,Y> := PolynomialRing(F,2);
@@ -424,7 +437,7 @@ function ManinSymbolGenList(k,G,F)
       F      := F,            // base field
       R      := R,            // polynomial ring F[X,Y]
       coset_list := coset_list,
-      find_coset := find_coset,
+      find_coset := find_cosetq,
       n      := n             
    >;
 end function;
@@ -1427,16 +1440,109 @@ end function;
 
 function ManSymGenListToRep(M,m) 
    quot := AmbientSpace(M)`quot;
-   Scoef := quot`Scoef;
    Tquot := quot`Tquot;
+
    if IsEmpty(Tquot) then
       return M!0;
    end if;
+
+   USE_NEW_TQuot := 1 eq 1;
+
+   if USE_NEW_TQuot then
+      Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action);
+      A := AmbientSpace(M);
+      A`quot := quot;
+   end if;
+
+   Scoef := quot`Scoef;
    Squot := quot`Squot;
+
+//"Scoef:", Scoef; Parent(Scoef);
+
+   c := [t[1]*Scoef[t[2]]: t in m];
+   l, cc := CanChangeUniverse(c, Z);
+   if l then
+      c := cc;
+   end if;
+
+//"c p:", Parent(c); "c:", c;
+//"m p:", Parent(m); "m:", m;
+
+   m1 := [Squot[t[2]]: t in m];
+
+   if #m1 gt 2 and m1[1] eq m1[2] then
+      s := c[1] + c[2];
+      r := [3 .. #m];
+      if IsZero(s) then
+	 c := c[r];
+	 m1 := m1[r];
+      else
+         c := [s] cat c[r];
+         m1 := [m1[1]] cat m1[r];
+      end if;
+      cind := [i: i in [1 .. #c] | not IsZero(c[i])];
+      c := c[cind];
+      m1 := m1[cind];
+   end if;
+
+   if USE_NEW_TQuot then
+//"USE MIX:", assigned quot`Tquot_mixed;
+       if Type(Tquot) eq Tup then
+	 //"USE MIX";
+	 //"Tquot:", Tquot;
+	 map, X, S, V := Explode(Tquot);
+	 //"X:", Parent(X); "S:", S;
+
+	 m2 := [map[i]: i in m1];
+	 sind := [i: i in [1.. #m2] | m2[i] lt 0];
+	 dind := [i: i in [1.. #m2] | m2[i] gt 0];
+	 sv := Vector(c[sind]);
+	 dv := Vector(c[dind]);
+
+//"Squot:", Squot;
+//"Scoef:", Scoef;
+/*
+"m:", m;
+"m1:", m1;
+"m2:", m2;
+"c:", c;
+"sind:", sind;
+"dind:", dind;
+"sv:", sv;
+"dv:", dv;
+*/
+
+	 dv := dv*RowSubmatrix(X, m2[dind]);
+//"sv:", sv; Parent(sv);
+	 sv := sv*RowSubmatrix(S, [-i: i in m2[sind]]);
+
+/*
+"dv:", dv;
+"sv:", sv;
+*/
+	 ans0 := dv + sv;
+
+      return ans0;
+
+Tquot := quot`Tquot;
+       end if;
+   end if;
+
+   if IsEmpty(Tquot) then
+      return M!0;
+   end if;
    ans := Universe(Tquot)!0;
+   /*
    for t in m do 
       ans +:= t[1]*Scoef[t[2]]*Tquot[Squot[t[2]]];
    end for;
+   */
+   for i := 1 to #c do
+      ans +:= c[i]*Tquot[m1[i]];
+   end for;
+//"ans w:", Weight(ans);
+//assert ans eq ans0;
+
    return ans;
 end function;
 
@@ -1715,7 +1821,7 @@ function ConvFromModularSymbol(M, Px)
       w := &+[ConvFromModularSymbol_helper(R, V, ZN, Px[i])
                 : i in [1..#Px]];
    end if;
-   return R!w;
+   return R!V!w;
 end function;
 
 
@@ -1741,19 +1847,52 @@ end function;
 // This change is to make this operator compatible with
 // HeckeOperator for double cosets
 
-function get_general_phi(G)
+function get_general_phi(G: TrivialChar := false)
+
+if TrivialChar then
   function phi(mat, G)
+//IndentPush(); "*** phi:";
      det := Determinant(mat);
+//"mat:", mat; "det:", det;
      if det notin Domain(G`DetRep) then return 0,0; end if;
      det_rep := G`DetRep(det);
-// mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
-     mat_sl2 := ModLevel(G)!(det_rep * mat * ScalarMatrix(2,det)^(-1));
-     ind, s := CosetReduce(mat_sl2, G`FindCoset);
+//"det_rep:", det_rep; Parent(det_rep);
+	    // mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
+"\n----\nphi mat:", mat;
+"prod IN:", det, <det_rep, mat, ScalarMatrix(2,det)^(-1)>;
+     prod := (det_rep * mat * ScalarMatrix(2,det)^(-1));
+"prod:", prod;
+      ind := G`FindCosetQ(prod)[1];
+"RET ind:", ind;
+//"RET:", ind; IndentPop();
+     return ind;
+  end function;
+
+else
+
+  function phi(mat, G)
+//IndentPush(); "*** phi:";
+     det := Determinant(mat);
+//"mat:", mat; "det:", det;
+     if det notin Domain(G`DetRep) then return 0,0; end if;
+     det_rep := G`DetRep(det);
+//"det_rep:", det_rep; Parent(det_rep);
+	    // mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
+     prod := (det_rep * mat * ScalarMatrix(2,det)^(-1));
+//"prod:", prod;
+     mat_sl2 := ModLevel(G)!prod;
+//"mat_sl2:", mat_sl2;
+     ind, s := CosetReduce(mat_sl2, G`FindCosetQ);
+//"first s:", s; Parent(s);
 // s := det_rep * ModLevel(G)!Eltseq(s);
-     // s := det_rep^(-1) * ScalarMatrix(2,det) * ModLevel(G)!Eltseq(s);
+     // OLD: s := det_rep^(-1) * ScalarMatrix(2,det) * ModLevel(G)!Eltseq(s);
      s := ModLevel(G)!Eltseq(s);
+//"final par s:", Parent(s); "RET:", ind, s; IndentPop();
      return ind, s;
   end function;
+
+end if;
+
   return phi, G;
 end function;
 
@@ -1800,7 +1939,17 @@ function get_non_split_cartan_plus_coset(g,x)
   return {t,AbsoluteFrobenius(t)};
 end function;
 
+declare attributes GrpGL2Hat: Cartan_phi;
+
 function get_Cartan_phi(G)
+
+  if assigned G`Cartan_phi then
+//"REUSE get_Cartan_phi:"; TES(G);
+      c := G`Cartan_phi;
+      return Explode(c);
+  end if;
+
+//"get_Cartan_phi:"; TES(G);
   if not IsPrime(Level(G)) then
       error "Not Implemented for Nonsplit Cartan of composite level!";
   end if;
@@ -1822,7 +1971,24 @@ function get_Cartan_phi(G)
   end if;
   pairs := [<get_coset(cosets[i], alpha),
 	       <i, cosets[i]^(-1)> > : i in [1..#cosets]];
-  find_coset := map<[p[1] : p in pairs] -> Codomain(G`FindCoset) | pairs>;
+
+  codom := Codomain(G`FindCoset);
+//"first codom:", codom;
+  if Type(codom) eq SeqEnum then
+    codom := Universe(codom);
+  end if;
+//"new codom:", codom;
+
+  if 1 eq 1 then
+      A := AssociativeArray();
+      for p in pairs do
+	 A[p[1]] := p[2];
+      end for;
+      find_coset := map<Parent(pairs[1, 1]) -> codom | x :-> A[x]>;
+  else
+      find_coset := map<[p[1] : p in pairs] -> codom | pairs>;
+  end if;
+
   function phi(mat, phi_data)
     G := phi_data[1];
     alpha := phi_data[2];
@@ -1834,10 +2000,14 @@ function get_Cartan_phi(G)
     s  := mat * g;
     return ind, ModLevelGL(G)!s;
   end function;
-  return phi, <G, alpha, is_good, find_coset>;
+
+  t := <G, alpha, is_good, find_coset>;
+  G`Cartan_phi := <phi, t>;
+  return phi, t;
+  //return phi, <G, alpha, is_good, find_coset>;
 end function;
 
-function get_phi(G,p)
+function get_phi(G, p: TrivialChar := false)
   if (IsGammaNS(G) or IsGammaNSplus(G)) and IsPrime(Level(G)) then
     return get_Cartan_phi(G);
 // Once we figure out how to do it correctly, that's what will happen here.
@@ -1846,6 +2016,6 @@ function get_phi(G,p)
     return get_general_phi_bad_primes(G,p);
 */
   else
-    return get_general_phi(G);
+    return get_general_phi(G: TrivialChar := TrivialChar);
   end if;
 end function;

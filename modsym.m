@@ -336,6 +336,7 @@ declare attributes ModSymA:
          inner_twists,
          action_on_modsyms,
          num_components,
+	 TnSparse_data,
 
 // Character groups of tori of M.
          X,                  
@@ -879,7 +880,7 @@ function ModularSymbolsDual(M, V)
    power to create nasty objects that don't satisfy the definition
    of a ModSymA.
 */
-   assert V subset DualRepresentation(M);
+   assert2 V subset DualRepresentation(M);
    MM := New(ModSymA);
    MM`root := AmbientSpace(M);
    MM`is_ambient_space := false;
@@ -989,8 +990,26 @@ intrinsic IsCuspidal(M::ModSymA) -> BoolElt
 {True if and only if M is contained in the cuspidal subspace
  of the ambient space.}
    if not assigned M`is_cuspidal then
+      /*
       M`is_cuspidal := VectorSpace(M) 
                 subset VectorSpace(CuspidalSubspace(AmbientSpace(M)));
+      */
+
+      vprint ModularSymbols, 2: "IsCuspidal: get VS";
+      vtime ModularSymbols, 2:
+	 V := VectorSpace(M);
+      vprint ModularSymbols, 2: "AmbientSpace";
+      vtime ModularSymbols, 2:
+	 A := AmbientSpace(M);
+      vprint ModularSymbols, 2: "CuspidalSubspace";
+      vtime ModularSymbols, 2:
+	 C := CuspidalSubspace(A);
+      vprint ModularSymbols, 2: "VS(CuspidalSubspace)";
+      vtime ModularSymbols, 2:
+	 C := VectorSpace(C);
+      vprint ModularSymbols, 2: "subset test";
+      vtime ModularSymbols, 2:
+	 M`is_cuspidal := V subset C;
    end if;
    return M`is_cuspidal;
 end intrinsic;
@@ -1605,6 +1624,9 @@ intrinsic Print(M::ModSymA, level::MonStgElt)
       return;
    end if;
 
+   ls := Sprint(LevelSubgroup(M), "Minimal");
+   //ls := "level subgroup";
+
    if IsOfGammaType(M) then
       if IsTrivial(DirichletCharacter(M)) then
          printf "%oodular symbols space for Gamma_0(%o) of weight %o and dimension %o over %o",
@@ -1628,16 +1650,16 @@ intrinsic Print(M::ModSymA, level::MonStgElt)
    else
      if IsTrivial(DirichletCharacter(M)) then
        printf "%oodular symbols space of level %o, weight %o, and dimension %o over %o",
-       full, LevelSubgroup(M), Weight(M), Dimension(M), BaseField(M);
+       full, ls, Weight(M), Dimension(M), BaseField(M);
      elif IsMultiChar(AmbientSpace(M)) then
        printf "%oodular symbols space of level %o, weight %o, and dimension %o over %o (multi-character)",
-              full, LevelSubgroup(M), Weight(M), Dimension(M), BaseField(M);
+              full, ls, Weight(M), Dimension(M), BaseField(M);
      else
        eps := DirichletCharacter(M);
        gens := Generators(Domain(eps));
        values_on_gens := [eps(g) : g in gens];
        printf "%oodular symbols space of level %o, weight %o, character sending %o to %o, and dimension %o over %o",
-         full, LevelSubgroup(M), Weight(M), gens, values_on_gens, Dimension(M), BaseField(M);
+         full, ls, Weight(M), gens, values_on_gens, Dimension(M), BaseField(M);
      end if;
    end if;
 end intrinsic;

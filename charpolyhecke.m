@@ -71,11 +71,11 @@ intrinsic HeckePolynomial(M::ModSymA, n::RngIntElt:
          // TO DO: for non-prime, bound := d(n)*n^((k-1)/2)
          // TO DO: non-cuspidal
       else
-         return CharacteristicPolynomial(DualHeckeOperator(M,n) : 
+         return MyCharPoly(DualHeckeOperator(M,n) : 
                        Proof := Proof, Al := "Modular");
       end if;
    end if;
-   return CharacteristicPolynomial(DualHeckeOperator(M,n));
+   return MyCharPoly(DualHeckeOperator(M,n));
 end intrinsic;
  
 
@@ -96,7 +96,7 @@ function CharacteristicPolynomialWithBound (T, maxeig)
    is that under our restrictive assumptions above, and knowing
    maxeig, the number of primes needed to pull this off can be
    bounded _much_ more efficiently than the bound apparently
-   used in the internal MAGMA command CharacteristicPolynomial,
+   used in the internal MAGMA command MyCharPoly,
    which of course doesn't know maxeig, and hence this routine
    appears to be sometimes much more efficient.
    Note of course that if these assumptions fail then the
@@ -208,7 +208,7 @@ function CharacteristicPolynomialWithBound (T, maxeig)
       end while;
 
       pr *:= l;
-      Append(~v,<l,PolynomialRing(Integers())!CharacteristicPolynomial(MatrixRing(GF(l),d)!T)>);
+      Append(~v,<l,PolynomialRing(Integers())!MyCharPoly(MatrixRing(GF(l),d)!T)>);
       l := NextPrime(l);
    end while;
 
