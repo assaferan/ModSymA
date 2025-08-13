@@ -1231,8 +1231,8 @@ procedure Get_Tquot(~quot, ~Tquot, ~CallP1Action2, ~CallP1Action)
 	       S := SS;
 	       quot`Scoef := Scoef;
 	       quot`Tquot := Tquot;
-"Move to Z:", Parent(X); S;
-V;
+//"Move to Z:", Parent(X); S;
+//V;
 	    try x:=1;
 	    catch e
 "FAIL Move to Z:",
@@ -2222,8 +2222,10 @@ function FastTn(M, V, n)
    if l then
       TEmat := C;
    end if;
+   RHS := TEmat*VEinv;
+   RHS := ChangeRing(RHS, F);
 
-   return  Matrix(Vmat*(TEmat*VEinv));
+   return  Matrix(Vmat*RHS);
 
 "VMat:", Parent(Vmat); Density(Vmat);
 "TEmat:", Parent(TEmat); Density(TEmat);

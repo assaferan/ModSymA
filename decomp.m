@@ -327,6 +327,8 @@ function Decomposition_recurse(M, p, stop,
    USE_FPIS := 1 eq 1 and char0 and #FAC gt 1;
    // [Add GetVersion() check]
 
+   // For now, this has issues, as it requires integer matrices, so we switch it off
+   USE_FPIS := false;
 	//"USE_FPIS:", USE_FPIS, "dim", Ncols(T);
 
    if 1 eq 1 and GetVerbose("ModularSymbols") ge 2 then

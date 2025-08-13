@@ -1858,12 +1858,12 @@ if TrivialChar then
      det_rep := G`DetRep(det);
 //"det_rep:", det_rep; Parent(det_rep);
 	    // mat_sl2 := ModLevel(G)!(det_rep^(-1) * mat);
-"\n----\nphi mat:", mat;
-"prod IN:", det, <det_rep, mat, ScalarMatrix(2,det)^(-1)>;
+// "\n----\nphi mat:", mat;
+// "prod IN:", det, <det_rep, mat, ScalarMatrix(2,det)^(-1)>;
      prod := (det_rep * mat * ScalarMatrix(2,det)^(-1));
-"prod:", prod;
-      ind := G`FindCosetQ(prod)[1];
-"RET ind:", ind;
+// "prod:", prod;
+      ind := G`FindCosetQ(ModLevel(G)!prod)[1];
+// "RET ind:", ind;
 //"RET:", ind; IndentPop();
      return ind;
   end function;
