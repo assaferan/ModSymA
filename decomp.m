@@ -309,6 +309,10 @@ function Decomposition_recurse(M, p, stop,
       fT  := Evaluate(fa,T);
       V   := KernelOn(fT,DualRepresentation(M));
       W   := ModularSymbolsDual(M,V);
+      W`multiplicity := Sign(M) eq 0 select a div 2 else a;
+      if (assigned M`multiplicity) and (W`multiplicity gt M`multiplicity) then 
+         W`multiplicity := M`multiplicity;
+      end if;
       if assigned M`sub_representation then
          W`sub_representation := M`sub_representation;
       end if;    
@@ -322,7 +326,7 @@ function Decomposition_recurse(M, p, stop,
       end if;
 
       if Characteristic(BaseField(W)) eq 0 and W_is_irreducible(W,a,elliptic_only, random_op select p else 0) then
-	 W`is_irreducible := true;
+	      W`is_irreducible := true;
          Append(~D,W); 
       else
          if not assigned W`is_irreducible then
@@ -1846,7 +1850,7 @@ function Decomposition_dimension_recurse(M, p, stop,
       end if;
 
       if Characteristic(BaseField(W)) eq 0 and W_is_irreducible(W,a,elliptic_only, random_op select p else 0) then
-	 W`is_irreducible := true;
+	      W`is_irreducible := true;
          Append(~dims,<Degree(f), a>);
          Append(~is_verified, true);
       else
@@ -1858,8 +1862,8 @@ function Decomposition_dimension_recurse(M, p, stop,
                dims cat:= Sub;
                is_verified cat:= is_ver_sub;
             else
-	      //Append(~dims,<Dimension(W),1>);
-	       Append(~dims,<Degree(f),a>);
+               //Append(~dims,<Dimension(W),1>);
+               Append(~dims,<Degree(f),a>);
                Append(~is_verified, false);
             end if;
          end if;

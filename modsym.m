@@ -413,7 +413,9 @@ declare attributes ModSymA:
          int_pairing,        // matrix of the intersection pairing (see intpairing.m).
 
 // Atkin-Lehner decomposition
-         al_decomp;       // sequence of pairs <p, eps_p>.
+         al_decomp,           // sequence of pairs <p, eps_p>.
+         
+         multiplicity;       
 
 declare type ModSymAElt;
 

@@ -138,7 +138,7 @@ import "linalg.m" :   EchelonPolySeq,
                       SaturatePolySeq,
                       Saturate;
 import "misc.m"  :    PivotColumn;
-import "modsym.m":    GetDegeneracyReps;
+import "modsym.m":    GetDegeneracyReps, ModularSymbolsSub;
 
 import "multichar.m": 
    AssociatedNewformSpace, 
@@ -195,7 +195,7 @@ extension of the base field of M.}
 end intrinsic;
 
 intrinsic eigenvecToEigenform(M::ModSymA, eig::ModTupFldElt,
-			      prec::RngIntElt) -> RngSerPowElt
+                  prec::RngIntElt) -> RngSerPowElt
 {.}
    if IsVerbose("ModularSymbols") then
       printf "Computing q-expansion of eigenform ... \n";
@@ -221,7 +221,7 @@ intrinsic eigenvecToEigenform(M::ModSymA, eig::ModTupFldElt,
       
   if prec gt 10 then 
     vprintf ModularSymbols,2: "Setting up the Tpei (for p less than %o) ... ",
-	                      prec;
+                          prec;
   end if;
   time0 := Cputime();
       
@@ -235,12 +235,12 @@ intrinsic eigenvecToEigenform(M::ModSymA, eig::ModTupFldElt,
   eps := DirichletCharacter(M);
       
   qeigenform[2], new_one_over_ei := Compute_qExpansion(qeigenform[1],
-							 qeigenform[2],
+                             qeigenform[2],
                                                          prec, Tpei,
                                                          eps, Weight(M),
-		                                         i, eig, false :
-							 one_over_ei:=
-							 one_over_ei);
+                                                 i, eig, false :
+                             one_over_ei:=
+                             one_over_ei);
 
   qeigenform[1] := prec;
   if one_over_ei cmpeq false then 
@@ -283,7 +283,7 @@ intrinsic qEigenform(M::ModSymA, prec::RngIntElt : debug:=false) -> RngSerPowElt
 
       /*
       if Characteristic(BaseField(M)) eq 0 then		 
-	      D := NewformDecomposition(M);
+          D := NewformDecomposition(M);
          require #D eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
          M := D[1]; 
          if assigned M`qeigenform and M`qeigenform[1] ge prec then
@@ -335,7 +335,7 @@ intrinsic qEigenform(M::ModSymA, prec::RngIntElt : debug:=false) -> RngSerPowElt
       
       Tpei := HeckeImages(AmbientSpace(M),i, prec);   // "time critical"
       if not IsOfGammaType(M) then
-	      Tpei := <Tpei, HeckeImagesSquarePrimes(AmbientSpace(M), i, prec)>;
+          Tpei := <Tpei, HeckeImagesSquarePrimes(AmbientSpace(M), i, prec)>;
       end if;
    
       vprintf ModularSymbols,2: "%os\n", Cputime(time0);
@@ -345,7 +345,7 @@ intrinsic qEigenform(M::ModSymA, prec::RngIntElt : debug:=false) -> RngSerPowElt
       M`qeigenform[2], new_one_over_ei := Compute_qExpansion(M`qeigenform[1], M`qeigenform[2],
                                        prec, Tpei,
                                        eps, Weight(M),
-		    i, eig, false : one_over_ei:=one_over_ei);
+            i, eig, false : one_over_ei:=one_over_ei);
 
       M`qeigenform[1] := prec;
       if one_over_ei cmpeq false then 
@@ -418,31 +418,31 @@ function Compute_qExpansion(num_known, f, prec, Tpei, eps,
             // a_{p^r} := a_p * a_{p^{r-1}} - eps(p)p^{k-1} a_{p^{r-2}}.
             p  := fac[1][1];
             r  := fac[1][2];
-	    if Type(eps) eq GrpDrchAElt then
-	      eps_p := Evaluate(eps,p);
-	      an := Coefficient(f,p) * Coefficient(f,p^(r-1))
+        if Type(eps) eq GrpDrchAElt then
+          eps_p := Evaluate(eps,p);
+          an := Coefficient(f,p) * Coefficient(f,p^(r-1))
                      - eps_p*p^(k-1)*Coefficient(f,p^(r-2));
-	    elif r eq 2 then
-	      // num_primes := PrimePos(NextPrime(prec)) - 1;
-	      an := DotProd(Tp2ei[PrimePos(p)],eig) * one_over_ei;
-	    else
-	      // !!! TODO : What is the correct thing here ??
-	      // meanwhile applying an ugly patch
-	      /*
-	      G := Parent(eps)`OriginalDomain;
-	      is_coercible, val := IsCoercible(G, [p,0,0,p]);
-	      if is_coercible then
-	        eps_p := Evaluate(eps, val);
-	      elif Modulus(BaseRing(G)) mod p ne 0 then
-		eps_p := 1;
-	      else
-	        eps_p := 0;
-	      end if;
-	      */
-	      eps_p := (Coefficient(f,p)^2 - Coefficient(f,p^2)) / p^(k-1);
-	      an := Coefficient(f,p) * Coefficient(f,p^(r-1))
+        elif r eq 2 then
+          // num_primes := PrimePos(NextPrime(prec)) - 1;
+          an := DotProd(Tp2ei[PrimePos(p)],eig) * one_over_ei;
+        else
+          // !!! TODO : What is the correct thing here ??
+          // meanwhile applying an ugly patch
+          /*
+          G := Parent(eps)`OriginalDomain;
+          is_coercible, val := IsCoercible(G, [p,0,0,p]);
+          if is_coercible then
+            eps_p := Evaluate(eps, val);
+          elif Modulus(BaseRing(G)) mod p ne 0 then
+        eps_p := 1;
+          else
+            eps_p := 0;
+          end if;
+          */
+          eps_p := (Coefficient(f,p)^2 - Coefficient(f,p^2)) / p^(k-1);
+          an := Coefficient(f,p) * Coefficient(f,p^(r-1))
                      - eps_p*p^(k-1)*Coefficient(f,p^(r-2));
-	    end if;       
+        end if;       
          else  // a_m*a_r := a_{mr} and we know all a_i for i<n.
             m  := fac[1][1]^fac[1][2];
             an := Coefficient(f,m)*Coefficient(f,n div m);
@@ -487,8 +487,8 @@ The base field must be either the rationals or a cyclotomic field.}
        J := mats[1];
        K := BaseRing(J);
        for mat in mats[2..#mats] do
-	   K := Compositum(K, BaseRing(mat));
-	   J := DirectSum(ChangeRing(J,K), ChangeRing(mat, K));
+       K := Compositum(K, BaseRing(mat));
+       J := DirectSum(ChangeRing(J,K), ChangeRing(mat, K));
        end for;
    end if;
    S, I := SaturatePolySeq(&cat forms, prec);
@@ -502,7 +502,7 @@ end intrinsic;
 
 
 forward qExpansionBasisBox,
-	qExpansionBasisNewform,
+    qExpansionBasisNewform,
         qExpansionBasisUniversal;
 
 
@@ -583,15 +583,15 @@ intrinsic qExpansionBasis(M::ModSymA, prec::RngIntElt :
        // if compositum fails, we can do this
 //       conds := [* Conductor(AbsoluteField(F)) : F in fields *];
        if not IsEmpty(S) then
-	   F := fields[1];
-	   for idx in [2..#S] do
-	       F := Compositum(F, fields[idx]);
-	   end for;
-	   R<q> := PowerSeriesRing(F);
-	   if (Type(F) ne FldRat) then
-	       F<zeta> := F;
-	   end if;
-	   S := &cat[[R!f : f in s] : s in S];
+       F := fields[1];
+       for idx in [2..#S] do
+           F := Compositum(F, fields[idx]);
+       end for;
+       R<q> := PowerSeriesRing(F);
+       if (Type(F) ne FldRat) then
+           F<zeta> := F;
+       end if;
+       S := &cat[[R!f : f in s] : s in S];
        end if;
        return S;
    end if;
@@ -620,9 +620,9 @@ intrinsic qExpansionBasis(M::ModSymA, prec::RngIntElt :
       M`qexpbasis[2] := Al eq "Universal" select
                         qExpansionBasisUniversal(M,prec, false) else
                         (Al eq "Newform" select
-			 qExpansionBasisNewform(M,prec, false) else
-			 // we scale by a common denominator
-			 qExpansionBasisBox(M, prec : M_val := M_val));
+             qExpansionBasisNewform(M,prec, false) else
+             // we scale by a common denominator
+             qExpansionBasisBox(M, prec : M_val := M_val));
       prec := M`qexpbasis[1];
    end if;
    _<q> := Universe(M`qexpbasis[2]);
@@ -732,10 +732,10 @@ intrinsic qIntegralBasis(A::ModSymA, prec::RngIntElt :
          ans, I := qExpansionBasisUniversal(A, prec_new, true);
       elif Al eq "Newform" then 
          prec_new := prec;
-	 ans, I := qExpansionBasisNewform(A, prec_new, true);
+     ans, I := qExpansionBasisNewform(A, prec_new, true);
       else
-	  prec_new := prec;
-	  ans, I := qExpansionBasisBox(A, prec_new);
+      prec_new := prec;
+      ans, I := qExpansionBasisBox(A, prec_new);
       end if;
       A`qintbasis[2] := ans;
       A`qintbasis[1] := prec_new;
@@ -808,8 +808,8 @@ function SpaceGeneratedByImages(C, N, F, do_saturate, prec : debug:=false)
 
    if do_saturate then
       if Type(BaseRing(Parent(C[1]))) eq FldCyc then
-	 gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(C[1])),
-					      Rationals());
+     gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(C[1])),
+                          Rationals());
          // project ans onto rational field, using restriction of scalars:
          Q<q> := PowerSeriesRing(Integers());
          ans2 := [];
@@ -820,18 +820,18 @@ function SpaceGeneratedByImages(C, N, F, do_saturate, prec : debug:=false)
             for i in [1..Degree(BaseRing(Parent(C[1])))] do
                Append(~ans2, &+[Integers()!(Eltseq(Coefficient(g,n))[i])*q^n : n in [0..Degree(g)]]);
             end for;
-	    // !!! TODO: Is this correct???
+        // !!! TODO: Is this correct???
             mat := Matrix([[(g@psi)(Coefficient(f,j)) :
-				 j in [0..Degree(f)]] : g in gal]);
-	    E, I := EchelonForm(mat);
-	    I := d*I;
-	    Append(~all_I, I);
+                 j in [0..Degree(f)]] : g in gal]);
+        E, I := EchelonForm(mat);
+        I := d*I;
+        Append(~all_I, I);
          end for;
          ans := ans2;
          assert #all_I gt 0;
          I := all_I[1];
          for I_other in all_I[2..#all_I] do
-	    I := DirectSum(I, I_other);
+        I := DirectSum(I, I_other);
          end for;
       else
          I := IdentityMatrix(FieldOfFractions(BaseRing(Parent(C[1]))), #ans);  
@@ -882,193 +882,193 @@ function qExpansionBasisNewform(A, prec, do_saturate)
       end if;
       f := qEigenform(A,prec : debug:=debug);
       if not IsOfGammaType(A) then
-	  old_eigforms := [f];
-	  Anew := AssociatedNewSpace(A);
+      old_eigforms := [f];
+      Anew := AssociatedNewSpace(A);
       end if;
       if (not IsOfGammaType(A)) and
-	 (LevelSubgroup(A) ne LevelSubgroup(Anew)) then
-	  /*
+     (LevelSubgroup(A) ne LevelSubgroup(Anew)) then
+      /*
         orig_eigvec := EigenvectorModSymASign(Anew,
-				      IsMinusQuotient(Anew) 
+                      IsMinusQuotient(Anew) 
                                         select -1 else +1);
         F := BaseRing(orig_eigvec);
         M_old := AmbientSpace(AssociatedNewSpace(A));
         M := AmbientSpace(A);
         in_out := exists(ii_out) { ii_out : ii_out in
-				  [1..#M_old`degeneracy_matrices_out] | 
-				  LevelSubgroup(M) eq
-				  M_old`degeneracy_matrices_out[ii_out][1] };
+                  [1..#M_old`degeneracy_matrices_out] | 
+                  LevelSubgroup(M) eq
+                  M_old`degeneracy_matrices_out[ii_out][1] };
         if not in_out then
-	   dummy := exists(ii_in) { ii_in : ii_in in
-				  [1..#M`degeneracy_matrices_in] | 
-				  LevelSubgroup(M_old) eq
-				  M`degeneracy_matrices_in[ii_in][1] };
+       dummy := exists(ii_in) { ii_in : ii_in in
+                  [1..#M`degeneracy_matrices_in] | 
+                  LevelSubgroup(M_old) eq
+                  M`degeneracy_matrices_in[ii_in][1] };
            divs := [x[1] : x in M`degeneracy_matrices_in[ii_in][2] ];
-	else
-	   divs := [x[1] : x in M_old`degeneracy_matrices_out[ii_out][2] ];
-	end if;
+    else
+       divs := [x[1] : x in M_old`degeneracy_matrices_out[ii_out][2] ];
+    end if;
         alphas := [ChangeRing(DegeneracyMatrix(M, M_old, d),F) : d in divs |
-		      d[1,2] eq 0 and d[2,1] eq 0];
+              d[1,2] eq 0 and d[2,1] eq 0];
         old_eigvecs := [orig_eigvec * Transpose(alpha) : alpha in alphas];
         old_eigforms := {eigenvecToEigenform(A, eig, prec) :
-		  eig in old_eigvecs};
+          eig in old_eigvecs};
        */
 //	N1 := CuspWidth(LevelSubgroup(Anew), Infinity());
 //	N2 := CuspWidth(LevelSubgroup(A), Infinity());
 //	divisors := Divisors(N1 mod N2 eq 0
 //			     select N1 div N2 else N2 div N1);
-	N := LCM(Level(Anew), Level(A));
-	divisors := GetDegeneracyReps(Anew, A, Divisors(N));
-	old_eigforms := [];
-	R := Parent(f);
-	q_R := R.1;
-	for a in divisors do
-	    mat := DegeneracyMatrix(AmbientSpace(A),AmbientSpace(Anew),a);
-	    mat := ChangeRing(Transpose(mat), BaseRing(R));
-	    // Check if this is the correct exponent
-	    // f_a := Evaluate(f, q_R^(N div Integers()!a[1,1]));
-	    f_a := Evaluate(f, q_R^(Integers()!a[2,2]));
-	    Append(~old_eigforms, f_a);
-	end for;
+    N := LCM(Level(Anew), Level(A));
+    divisors := GetDegeneracyReps(Anew, A, Divisors(N));
+    old_eigforms := [];
+    R := Parent(f);
+    q_R := R.1;
+    for a in divisors do
+        mat := DegeneracyMatrix(AmbientSpace(A),AmbientSpace(Anew),a);
+        mat := ChangeRing(Transpose(mat), BaseRing(R));
+        // Check if this is the correct exponent
+        // f_a := Evaluate(f, q_R^(N div Integers()!a[1,1]));
+        f_a := Evaluate(f, q_R^(Integers()!a[2,2]));
+        Append(~old_eigforms, f_a);
+    end for;
       end if;
       if debug then 
          IndentPop();
          printf " ... qEigenform took %os\n", Cputime(time0);
       end if;
       if not IsOfGammaType(A) then
-	  all_B := [];
-	  all_I := [* *];
-	  dim := Maximum([#Eltseq(f) : f in old_eigforms] cat [prec-1]);
-	  for f in old_eigforms do
+      all_B := [];
+      all_I := [* *];
+      dim := Maximum([#Eltseq(f) : f in old_eigforms] cat [prec-1]);
+      for f in old_eigforms do
               Q := BaseRing(Parent(f));
-	      //V := VectorSpace(BaseField(A),#Eltseq(f));
+          //V := VectorSpace(BaseField(A),#Eltseq(f));
               V := VectorSpace(BaseField(A), dim);
               if Q cmpeq BaseField(A) then
-		  // seq := Eltseq(f);
-		  seq := Eltseq(f) cat [0 : i in [#Eltseq(f)+1..dim]];
-		  B := [V!seq];
-		  F := (do_saturate and Type(BaseField(A)) eq FldRat) 
+          // seq := Eltseq(f);
+          seq := Eltseq(f) cat [0 : i in [#Eltseq(f)+1..dim]];
+          B := [V!seq];
+          F := (do_saturate and Type(BaseField(A)) eq FldRat) 
                        select Integers() else BaseField(A);
-		  I := Matrix([[Q!1]]);
+          I := Matrix([[Q!1]]);
               else
-		  if ISA( Type(Q), FldNum) then
-		      if not IsNormal(Q) then
-			  Q := NormalClosure(Q);
-			  Qq := PowerSeriesRing(Q);
-			  ff := Qq!f;
-		      else
-			  ff := f;
-		      end if;
-		      V := VectorSpace(BaseField(A), prec-1); // note that the dimension may be different
+          if ISA( Type(Q), FldNum) then
+              if not IsNormal(Q) then
+              Q := NormalClosure(Q);
+              Qq := PowerSeriesRing(Q);
+              ff := Qq!f;
+              else
+              ff := f;
+              end if;
+              V := VectorSpace(BaseField(A), prec-1); // note that the dimension may be different
                                                     // because Eltseq(f) omits trailing zeros
-		      // TO DO: make the next line optimal
-		      // time 
-		      coeffs := [ Eltseq(Coefficient(ff,i)) : i in [1..prec-1] ];
-		      B := [V! [coeffs[i][j] : i in [1..#coeffs]] :
-			    j in [1..Degree(Q)]];
-		      // This fails when K(f) is not Galois !!!
-		      // gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(f)),
-		      gal, dummy, psi := AutomorphismGroup(Q, BaseField(A));
-		      T := Matrix([[(g@psi)(Coefficient(ff,j)) :
-				    j in [1..prec-1]] : g in gal]);
-		      E, I := EchelonForm(T);
-		      delete coeffs;
-		  else
-		      assert Type(Q) eq RngUPolRes;
-		      // this is what was here previously:
-		      g := Modulus(Q);
-		      n := Degree(g);
-		      R := PreimageRing(Q);
-		      //B := [V![Coefficient(R!a,j) : a in Eltseq(f)] : j in [0..n-1]];
-		      seq := Eltseq(f) cat [0 : i in [#Eltseq(f)+1..dim]];
-		      B := [V![Coefficient(R!a,j) : a in seq] : j in [0..n-1]];
-		      // !!! TODO: Is this correct???
-		      gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(f)),
-							   BaseField(A));
-		      mat := Matrix([[(g@psi)(Coefficient(f,j)) :
-				      j in [1..Degree(f)]] :	g in gal]);
-		      E, I := EchelonForm(mat);
-		  end if;
-		  if do_saturate 
-		     and Type(BaseField(A)) eq FldRat then
+              // TO DO: make the next line optimal
+              // time 
+              coeffs := [ Eltseq(Coefficient(ff,i)) : i in [1..prec-1] ];
+              B := [V! [coeffs[i][j] : i in [1..#coeffs]] :
+                j in [1..Degree(Q)]];
+              // This fails when K(f) is not Galois !!!
+              // gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(f)),
+              gal, dummy, psi := AutomorphismGroup(Q, BaseField(A));
+              T := Matrix([[(g@psi)(Coefficient(ff,j)) :
+                    j in [1..prec-1]] : g in gal]);
+              E, I := EchelonForm(T);
+              delete coeffs;
+          else
+              assert Type(Q) eq RngUPolRes;
+              // this is what was here previously:
+              g := Modulus(Q);
+              n := Degree(g);
+              R := PreimageRing(Q);
+              //B := [V![Coefficient(R!a,j) : a in Eltseq(f)] : j in [0..n-1]];
+              seq := Eltseq(f) cat [0 : i in [#Eltseq(f)+1..dim]];
+              B := [V![Coefficient(R!a,j) : a in seq] : j in [0..n-1]];
+              // !!! TODO: Is this correct???
+              gal, dummy, psi := AutomorphismGroup(BaseRing(Parent(f)),
+                               BaseField(A));
+              mat := Matrix([[(g@psi)(Coefficient(f,j)) :
+                      j in [1..Degree(f)]] :	g in gal]);
+              E, I := EchelonForm(mat);
+          end if;
+          if do_saturate 
+             and Type(BaseField(A)) eq FldRat then
                       // Steve changed this
                       // C := Basis(Saturate(B));
                       B := Saturation(Matrix(B));
                       r := Nrows(B);
                       B := [ B[i] : i in [1..r] ];
                       F := Integers();
-		  else
-		      F := BaseField(A);
-		  end if;
+          else
+              F := BaseField(A);
+          end if;
               end if;
               assert #B gt 0;
-	      all_B cat:= B;
-	      Append(~all_I,I); 
-	  end for;
-	  assert #all_I gt 0;
-	  I := all_I[1];
-	  for I_other in all_I[2..#all_I] do
-	      I := DirectSum(I, I_other);
-	  end for;
-	  // B may contain either vectors or power series (see SpaceGeneratedByImages)
-	  //      return SpaceGeneratedByImages(B, Level(A) div Level(AssociatedNewSpace(A)),
-	  N := (IsOfGammaType(A) select
-		Level(A) div Level(AssociatedNewSpace(A)) else 1);
-	  ans, J := SpaceGeneratedByImages(all_B, N, 
-					   F, do_saturate, prec : debug:=debug);
-	  // if the base field is not Galois
-	  //if ISA( Type(Q), FldNum) then
-	  // J := Matrix(&cat[[[(g@psi)(f_J[j]) :
-	  //		     j in [1..Ncols(J)]] : f_J in Rows(J)] : g in gal]);
-	  //end if;
-	  
-	  I := TensorProduct(I, IdentityMatrix(BaseRing(I), Nrows(J) div Nrows(I)));
+          all_B cat:= B;
+          Append(~all_I,I); 
+      end for;
+      assert #all_I gt 0;
+      I := all_I[1];
+      for I_other in all_I[2..#all_I] do
+          I := DirectSum(I, I_other);
+      end for;
+      // B may contain either vectors or power series (see SpaceGeneratedByImages)
+      //      return SpaceGeneratedByImages(B, Level(A) div Level(AssociatedNewSpace(A)),
+      N := (IsOfGammaType(A) select
+        Level(A) div Level(AssociatedNewSpace(A)) else 1);
+      ans, J := SpaceGeneratedByImages(all_B, N, 
+                       F, do_saturate, prec : debug:=debug);
+      // if the base field is not Galois
+      //if ISA( Type(Q), FldNum) then
+      // J := Matrix(&cat[[[(g@psi)(f_J[j]) :
+      //		     j in [1..Ncols(J)]] : f_J in Rows(J)] : g in gal]);
+      //end if;
+      
+      I := TensorProduct(I, IdentityMatrix(BaseRing(I), Nrows(J) div Nrows(I)));
 
-	  // This is a quick patch as we don't really need it right now
-	  if Nrows(I) ne Nrows(J) then
-	      I := IdentityMatrix(BaseRing(I), Nrows(J));
-	  end if;
+      // This is a quick patch as we don't really need it right now
+      if Nrows(I) ne Nrows(J) then
+          I := IdentityMatrix(BaseRing(I), Nrows(J));
+      end if;
       else
-	        Q := BaseRing(Parent(f));
-		V := VectorSpace(BaseField(A),#Eltseq(f));
-		if Q cmpeq BaseField(A) then
-		    seq := Eltseq(f);
-		    B := [V!seq];
-		    F := (do_saturate and Type(BaseField(A)) eq FldRat) 
+            Q := BaseRing(Parent(f));
+        V := VectorSpace(BaseField(A),#Eltseq(f));
+        if Q cmpeq BaseField(A) then
+            seq := Eltseq(f);
+            B := [V!seq];
+            F := (do_saturate and Type(BaseField(A)) eq FldRat) 
                          select Integers() else BaseField(A);
-		else
-		    if ISA( Type(Q), FldNum) then
-			V := VectorSpace(BaseField(A), prec-1); // note that the dimension may be different
+        else
+            if ISA( Type(Q), FldNum) then
+            V := VectorSpace(BaseField(A), prec-1); // note that the dimension may be different
                         // because Eltseq(f) omits trailing zeros
-			// TO DO: make the next line optimal
-			// time 
-			coeffs := [ Eltseq(Coefficient(f,i)) : i in [1..prec-1] ];
-			B := [V! [coeffs[i][j] : i in [1..#coeffs]] : j in [1..Degree(Q)]];
-			delete coeffs;
-		    else
-			assert Type(Q) eq RngUPolRes;
-			// this is what was here previously:
-			g := Modulus(Q);
-			n := Degree(g);
-			R := PreimageRing(Q);
-			B := [V![Coefficient(R!a,j) : a in Eltseq(f)] : j in [0..n-1]];
-		    end if;
-		    if do_saturate 
-		       and Type(BaseField(A)) eq FldRat then
-			// Steve changed this
-			// C := Basis(Saturate(B));
-			B := Saturation(Matrix(B));
-			r := Nrows(B);
-			B := [ B[i] : i in [1..r] ];
-			F := Integers();
-		    else
-			F := BaseField(A);
-		    end if;
-		end if;
-		assert #B gt 0;
-		ans, J := SpaceGeneratedByImages(B, Level(A) div Level(AssociatedNewSpace(A)), 
-						 F, do_saturate, prec : debug:=debug);
-		I := IdentityMatrix(Q, Nrows(J));
+            // TO DO: make the next line optimal
+            // time 
+            coeffs := [ Eltseq(Coefficient(f,i)) : i in [1..prec-1] ];
+            B := [V! [coeffs[i][j] : i in [1..#coeffs]] : j in [1..Degree(Q)]];
+            delete coeffs;
+            else
+            assert Type(Q) eq RngUPolRes;
+            // this is what was here previously:
+            g := Modulus(Q);
+            n := Degree(g);
+            R := PreimageRing(Q);
+            B := [V![Coefficient(R!a,j) : a in Eltseq(f)] : j in [0..n-1]];
+            end if;
+            if do_saturate 
+               and Type(BaseField(A)) eq FldRat then
+            // Steve changed this
+            // C := Basis(Saturate(B));
+            B := Saturation(Matrix(B));
+            r := Nrows(B);
+            B := [ B[i] : i in [1..r] ];
+            F := Integers();
+            else
+            F := BaseField(A);
+            end if;
+        end if;
+        assert #B gt 0;
+        ans, J := SpaceGeneratedByImages(B, Level(A) div Level(AssociatedNewSpace(A)), 
+                         F, do_saturate, prec : debug:=debug);
+        I := IdentityMatrix(Q, Nrows(J));
       end if;
       return ans, I*ChangeRing(J, BaseRing(I));
    end if;
@@ -1144,7 +1144,7 @@ function EigenvectorOfMatrixWithCharpoly(T, f : e := 1)
 /* Let T be an nxn matrix over K with irreducible characteristic
  polynomial f.  This function returns an eigenvector for T
  over the extension field K[x]/(f(x)). 
- assaferan : added e to denot exponent, so that T could have as
+ assaferan : added e to denote exponent, so that T could have as
  a characteristic polynomial a power of an irreducible - f^e
 */
 
@@ -1152,8 +1152,8 @@ function EigenvectorOfMatrixWithCharpoly(T, f : e := 1)
    // because this works generically for any field.
    n  := Degree(f) * e;
    K  := Parent(T[1,1]);
-   if n eq 1 then
-      return VectorSpace(K,n)![1];
+   if Degree(f) eq 1 then
+      return VectorSpace(K,n).1;
    end if;
    
    vprintf ModularSymbols,1: "Calling EigenvectorOfMatrixWithCharpoly ... ";
@@ -1212,20 +1212,20 @@ function EigenvectorOfMatrixWithCharpoly(T, f : e := 1)
          //w +:= c[i]*vv;
          u := Ln!vv;
  time2 := Cputime(time1);
-	 if denom_scale ne 1 then
-	    e := Eltseq(vv);
-	    g := GCD(e);
-	    if g ne 1 then
-		// printf " {GCD %o}", g;
-		vv := Parent(vv)![x div g: x in e];
-		scale *:= g;
-	    end if;
-	    u := Ln!vv;
-	    u := scale*u;
-	    scale *:= denom_scale;
-	 else
-	    u := Ln!vv;
-	 end if;
+     if denom_scale ne 1 then
+        e := Eltseq(vv);
+        g := GCD(e);
+        if g ne 1 then
+        // printf " {GCD %o}", g;
+        vv := Parent(vv)![x div g: x in e];
+        scale *:= g;
+        end if;
+        u := Ln!vv;
+        u := scale*u;
+        scale *:= denom_scale;
+     else
+        u := Ln!vv;
+     end if;
          w +:= c[i]*u;
  time3 := Cputime(time0);
  //printf "  %o", [time1, time3-time1];
@@ -1240,7 +1240,7 @@ end function;
 
 function deg_set(L)
     if #L eq 0 then
-	return { 0 };
+    return { 0 };
     end if;
 
     t := L[#L];
@@ -1250,7 +1250,7 @@ function deg_set(L)
     m := t[2];
     D := DD;
     for i := 1 to m do
-	D join:= { x + d: x in D };
+    D join:= { x + d: x in D };
     end for;
 
     return D;
@@ -1268,7 +1268,7 @@ end function;
 //
 // SRD, November 2010
 
-function QuickIrredTest(X)
+function QuickIrredTest(X : e := 1)
 
     F := BaseRing(Parent(X));
     n := Ncols(X);
@@ -1303,7 +1303,7 @@ function QuickIrredTest(X)
     end if;
 
     f := MinimalPolynomial(Y);
-    return Degree(f) eq n;
+    return Degree(f)*e eq n;
 
 end function;
  
@@ -1317,7 +1317,7 @@ function my_ev_before_lift(A, M)
   str := "T_" * IntegerToString(p);
   while true do
       vprintf ModularSymbols, 2:
-	  "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
+      "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
       if use_quick then
           if QuickIrredTest(T) then
                vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
@@ -1335,7 +1335,7 @@ function my_ev_before_lift(A, M)
 
       if i eq 15 then
         "WARNING: it seems hard to find an irreducible element in the Hecke algebra.";
-	if Characteristic(BaseRing(A)) gt 0 then
+    if Characteristic(BaseRing(A)) gt 0 then
            "In characteristic p, the algorithm is not guaranteed to terminate.";
         end if;
       end if;
@@ -1354,8 +1354,8 @@ function my_ev_before_lift(A, M)
 end function;
 
 function FindIrreducibleHeckeOperator(A : e := 1)
-    // Find a linear combination of Hecke operators whose
-    // charpoly on A is irreducible to the e-th power.
+   // Find a linear combination of Hecke operators whose
+   // charpoly on A is irreducible to the e-th power.
 
     vprintf ModularSymbols, 1: 
         "Looking for an irreducible element in the Hecke algebra of %o\n", A;
@@ -1369,44 +1369,34 @@ function FindIrreducibleHeckeOperator(A : e := 1)
     i := 1;
     str := "T_" * IntegerToString(p);
     while true do
-	vprintf ModularSymbols, 2:
-	    "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
-        if use_quick then
-            if QuickIrredTest(T) then
-                 vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
-                 vtime ModularSymbols, 2:
-                 f := CharacteristicPolynomial(T);
-                 // assert IsIrreducible(f);
-                 break;
-            end if;
-        else
-            f := CharacteristicPolynomial(T);
-            if IsIrreducible(f) then
-                break;
-            end if;
-	    if (e gt 1) then
-	        FAC := Factorization(f);
-	        if #FAC eq 1 and FAC[1][2] eq e then
-		   f := FAC[1][1];
-		   break;
-		end if;
-	    end if;
+        vprintf ModularSymbols, 2:
+            "FindIrreducibleHeckeOperator, try #%o, %o\n", i, str;
+        if (not use_quick) or QuickIrredTest(T : e := e) then
+            vprintf ModularSymbols, 2: "CharacteristicPolynomial: "; 
+            vtime ModularSymbols, 2:
+            fT := CharacteristicPolynomial(T);
+            FAC := Factorization(fT);
+            assert #FAC eq 1;
+            f, a := Explode(FAC[1]);
+            assert a eq e;
+            // assert IsIrreducible(f);
+            break;
         end if; 
 
-	if i eq 15 then
+        if i eq 15 then
             "WARNING: it seems hard to find an irreducible element in the Hecke algebra.";
-	    if Characteristic(BaseRing(A)) gt 0 then
+            if Characteristic(BaseRing(A)) gt 0 then
                 "In characteristic p, the algorithm is not guaranteed to terminate.";
-	    end if;
-	end if;
+            end if;
+        end if;
 
-	p := SmallestPrimeNondivisor(Level(A), NextPrime(p));
+        p := SmallestPrimeNondivisor(Level(A), NextPrime(p));
         rand := Random([-1,1]);
         T +:= rand*DualHeckeOperator(A,p);
         str *:= " + " * IntegerToString(rand) * "*T_" * IntegerToString(p);
-	i +:= 1;
+        i +:= 1;
     end while;
-   
+    
     IndentPop();
     vprintf ModularSymbols,1: 
         "Irreducible element of Hecke algebra (of dimension %o) is %o\n", Dimension(A),str;
@@ -1415,9 +1405,9 @@ function FindIrreducibleHeckeOperator(A : e := 1)
 end function;
  
 
-function EigenvectorBeforeLift(A)
-   T, f := FindIrreducibleHeckeOperator(A);
-   return EigenvectorOfMatrixWithCharpoly(T,f);
+function EigenvectorBeforeLift(A : e := 1)
+   T, f := FindIrreducibleHeckeOperator(A : e := e);
+   return EigenvectorOfMatrixWithCharpoly(T,f : e := e);
 end function;
 
 function my_eigenvector(A, M)
@@ -1435,20 +1425,20 @@ function my_eigenvector(A, M)
    return sum;
 end function;
 
-function EigenvectorModSymA(A)
+function EigenvectorModSymA(A : e := 1)
    // Returns an eigenvector of the Hecke algebra on A over
    // a polynomial extension of the ground field.
    // The eigenvector lies in DualSpace(A) tensor Qbar.
    if not assigned A`eigen then
-      e := EigenvectorBeforeLift(A);
-      F := Parent(e[1]);
+      eig := EigenvectorBeforeLift(A : e := e);
+      F := Parent(eig[1]);
       V := RSpace(F,Degree(A));
       // B := [V!b : b in Basis(DualRepresentation(A))];
-      // A`eigen := &+[e[i]*B[i] : i in [1..#B]];
+      // A`eigen := &+[eig[i]*B[i] : i in [1..#B]];
       B := Basis(DualRepresentation(A));
       sum := V!0;
       for i := 1 to #B do
-	      sum +:= e[i]*V!B[i];
+          sum +:= eig[i]*V!B[i];
       end for;
       A`eigen := sum;
    end if;
@@ -1456,26 +1446,26 @@ function EigenvectorModSymA(A)
 end function;
 
 
-function EigenvectorModSymASign(A, sign)
+function EigenvectorModSymASign(A, sign : e := 1)
 // Compute eigenvector for sign subspace of A.
    assert sign eq -1 or sign eq 1 ;
    if IsPlusQuotient(A) then
       assert sign ne -1;
-      return EigenvectorModSymA(A);
+      return EigenvectorModSymA(A : e := e);
    end if ;
    if IsMinusQuotient(A) then
       assert sign ne +1 ;
-      return EigenvectorModSymA(A);
+      return EigenvectorModSymA(A : e := e);
    end if ;
    if sign eq +1 then
       if not assigned A`eigenplus then
-         A`eigenplus := EigenvectorModSymA(PlusSubspaceDual(A));   
+         A`eigenplus := EigenvectorModSymA(PlusSubspaceDual(A) : e := e);   
       end if;
       return A`eigenplus;
    end if;
    if sign eq -1 then
       if not assigned A`eigenminus then
-         A`eigenminus := EigenvectorModSymA(MinusSubspaceDual(A));   
+         A`eigenminus := EigenvectorModSymA(MinusSubspaceDual(A) : e := e);   
       end if;
       return A`eigenminus;
    end if;
@@ -1691,32 +1681,44 @@ intrinsic SystemOfEigenvalues(M::ModSymA, prec::RngIntElt : BadPrimes := true) -
 
    /*
    if Characteristic(BaseField(M)) eq 0 then
-      D := NewformDecomposition(M);
-      require #D eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
-      M := D[1];
+      // D := NewformDecomposition(M);
+      // require #D eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
+      // M := D[1];
+      p := SmallestPrimeNondivisor(Level(M),2);
+      Tp := HeckeOperator(M,p);
+      FAC := Factorization(CharacteristicPolynomial(Tp));
+      require #FAC eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
+      f, a := Explode(FAC[1]);
+      assert Evaluate(f, Tp) eq 0;
+      V := VectorSpace(Rationals(), Dimension(M));
+      // creating a Tp-invariant subspace which is also Star invariant
+      V := sub<V | [v*Tp^j : j in [0..Degree(f)-1]] > where v := V.1;
+      V := V + V*StarInvolution(M);
+      M := ModularSymbolsSub(M, V*BasisMatrix(VectorSpace(M)));
    end if;
    */
 
-   if IsMultiChar(M) then
-      return SystemOfEigenvalues(AssociatedNewformSpace(M), prec);
-   end if;
+    if IsMultiChar(M) then
+        return SystemOfEigenvalues(AssociatedNewformSpace(M), prec);
+    end if;
 
-   if Sign(M) ne 0 or Dimension(M) eq 1 then
-      eig := EigenvectorModSymA(M);    
-   else
-      eig := EigenvectorModSymASign(M,IsMinusQuotient(M) 
-                                        select -1 else +1);
-   end if;
+    assert assigned M`multiplicity; // should have happened upon deocmposition
+    if Sign(M) ne 0 or Dimension(M) eq 1 then
+        eig := EigenvectorModSymA(M : e := M`multiplicity);    
+    else
+        eig := EigenvectorModSymASign(M,IsMinusQuotient(M) 
+                                        select -1 else +1 : e := M`multiplicity);
+    end if;
 
-   require not (eig cmpeq false): "Argument 1 must correspond to a newform.";
+    require not (eig cmpeq false): "Argument 1 must correspond to a newform.";
 
-   dummy := exists(i) { i : i in [1..Degree(eig)] | eig[i] ne 0 };  // nonzero entry
-   Tpei := HeckeImages(AmbientSpace(M),i, prec+1 : BadPrimes := BadPrimes);                         // "time critical"
-   f := Compute_qExpansion(0, PowerSeriesRing(Parent(eig[1]))!0, prec+1, Tpei,
-                              DirichletCharacter(M), Weight(M), 
-                              i, eig, true : coprime_to := BadPrimes select 1 else Level(M));   
-                              // true, so we only get the a_n with n prime.
-   return [Coefficient(f,p) : p in [2..prec] |IsPrime(p) and (BadPrimes select 1 else Level(M)) mod p ne 0];
+    dummy := exists(i) { i : i in [1..Degree(eig)] | eig[i] ne 0 };  // nonzero entry
+    Tpei := HeckeImages(AmbientSpace(M),i, prec+1 : BadPrimes := BadPrimes);                         // "time critical"
+    f := Compute_qExpansion(0, PowerSeriesRing(Parent(eig[1]))!0, prec+1, Tpei,
+                                DirichletCharacter(M), Weight(M), 
+                                i, eig, true : coprime_to := BadPrimes select 1 else Level(M));   
+                                // true, so we only get the a_n with n prime.
+    return [Coefficient(f,p) : p in [2..prec] |IsPrime(p) and (BadPrimes select 1 else Level(M)) mod p ne 0];
 
 end intrinsic;
 
@@ -1841,7 +1843,7 @@ using NewformDecomposition.}
          assert #V eq #[q : q in [2..prec] | IsPrime(q)];
          H := RMatrixSpace(K,#B,#V)!(
                                &cat[[Coefficient(f,p) : p in [q : q in [2..prec] |IsPrime(q)]] : f in B]);
-	 if Rank(H) lt d then
+     if Rank(H) lt d then
             print "EigenvectorInTermsOfExpansionBasis: Forced to increase precision. Tries =", tries;
             tries := tries + 1;
             if tries gt 20 then
@@ -1871,7 +1873,7 @@ using NewformDecomposition.}
             A := MatrixAlgebra(Codomain(psi),d)!A;
             v := v*A;
             denom := DenominatorOf(v);
-	    denom_qexp := DenominatorOf(B);
+        denom_qexp := DenominatorOf(B);
             M`eigenvector_in_terms_of_expansion_basis := <Eltseq(denom*v), denom, denom_qexp>;
             break;
          end if;
@@ -2115,7 +2117,7 @@ intrinsic qEigenformBasis(M::ModSymA, prec::RngIntElt) -> SeqEnum[RngSerPowElt]
 // D := Decomposition(S, HeckeBound(S));
   D := NewformDecomposition(S);
   eigenforms := &cat[get_eigenform_galois_orbit(qEigenform(d, prec),prec) :
-		    d in D];
+            d in D];
 //  eigenforms := &cat[qIntegralBasis(d, prec :Al := "Universal") : d in D];
   basis := eigenforms;
 //  basis := EchelonPolySeq(eigenforms, prec);
@@ -2137,7 +2139,7 @@ function find_echelon_forms_vecs(M)
   dim := NumberOfRows(I);
   E := Matrix([[Coefficient(f,i) : i in [1..prec-1]] : f in echelon]);
   t := Restrict(Transpose(ActionOnModularSymbolsBasis([1,1,0,1], M)),
-	      DualVectorSpace(S));
+          DualVectorSpace(S));
   pivots := [PivotColumn(E,j) : j in [1..dim]];
 // !!! TODO :
 // This does not work in general, as the eigenspaces are larger and sometimes
@@ -2151,8 +2153,8 @@ function find_echelon_forms_vecs(M)
   decomp := [hol_forms meet ChangeRing(DualVectorSpace(d),F) : d in D];
   // This doesn't always work, because this is up to automorphism
   eigenvecs := Matrix(&cat[get_eigenvector_galois_orbit(
-						 my_eigenvector(d,M),
-						 F) : d in decomp]);
+                         my_eigenvector(d,M),
+                         F) : d in decomp]);
   K := BaseRing(eigenvecs);
   Embed(BaseRing(I), K, K.1);
   t_K := ChangeRing(t_eigvecs_in_M, K);
@@ -2164,8 +2166,8 @@ function find_echelon_forms_vecs(M)
   Y := DiagonalMatrix(R, dim, [R.i : i in [dim+1..2*dim]]);
   z := X*t_R - i_R * Y * e_R;
   eqs := &cat[[[Coefficient(z[i,j], k, 1) : k in [1..2*dim]] :
-						j in [1..NumberOfColumns(z)]] :
-						i in [1..NumberOfRows(z)]];
+                        j in [1..NumberOfColumns(z)]] :
+                        i in [1..NumberOfRows(z)]];
   mat := Matrix(eqs);
   ker := Kernel(Transpose(ChangeRing(mat, K)));
   x_vals := [Basis(ker)[1][i] : i in [1..dim]];
