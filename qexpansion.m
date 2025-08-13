@@ -270,25 +270,27 @@ intrinsic qEigenform(M::ModSymA, prec::RngIntElt : debug:=false) -> RngSerPowElt
       end if;
 
       if assigned M`associated_new_space then
-	 if IsOfGammaType(M) then
-           if Level(AssociatedNewSpace(M)) lt Level(M) then
-              return qEigenform(AssociatedNewSpace(M),prec);   
-           end if;
-	 else
-	   if LevelSubgroup(M) ne LevelSubgroup(AssociatedNewSpace(M)) then
-              return qEigenform(AssociatedNewSpace(M),prec);   
-           end if;
-	 end if;
+         if IsOfGammaType(M) then
+               if Level(AssociatedNewSpace(M)) lt Level(M) then
+                  return qEigenform(AssociatedNewSpace(M),prec);   
+               end if;
+         else
+            if LevelSubgroup(M) ne LevelSubgroup(AssociatedNewSpace(M)) then
+                  return qEigenform(AssociatedNewSpace(M),prec);   
+               end if;
+         end if;
       end if;
 
+      /*
       if Characteristic(BaseField(M)) eq 0 then		 
-	 D := NewformDecomposition(M);
+	      D := NewformDecomposition(M);
          require #D eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
          M := D[1]; 
          if assigned M`qeigenform and M`qeigenform[1] ge prec then
             return M`qeigenform[2] + O((Parent(M`qeigenform[2]).1)^prec);
          end if;
       end if;
+      */
      
       vprintf ModularSymbols,1: 
          "Finding eigenvector for newform modular symbols space of dimension %o ... \n", Dimension(M);
@@ -333,7 +335,7 @@ intrinsic qEigenform(M::ModSymA, prec::RngIntElt : debug:=false) -> RngSerPowElt
       
       Tpei := HeckeImages(AmbientSpace(M),i, prec);   // "time critical"
       if not IsOfGammaType(M) then
-	Tpei := <Tpei, HeckeImagesSquarePrimes(AmbientSpace(M), i, prec)>;
+	      Tpei := <Tpei, HeckeImagesSquarePrimes(AmbientSpace(M), i, prec)>;
       end if;
    
       vprintf ModularSymbols,2: "%os\n", Cputime(time0);
@@ -372,7 +374,7 @@ end function;
 
 
 function Compute_qExpansion(num_known, f, prec, Tpei, eps, 
-                            k, i, eig, prime_only : one_over_ei:=false)
+                            k, i, eig, prime_only : one_over_ei:=false, coprime_to := 1)
 
   if Type(Tpei) eq Tup then
      Tp2ei := Tpei[2];
@@ -406,11 +408,11 @@ function Compute_qExpansion(num_known, f, prec, Tpei, eps,
      
       if n eq 1 then
          an := 1;
-      elif IsPrime(n) then
+      elif IsPrime(n) and (coprime_to mod n ne 0) then
 
          an := DotProd(Tpei[PrimePos(n)],eig) * one_over_ei;
 
-      elif not prime_only then
+      elif not prime_only and GCD(coprime_to, n) eq 1 then
          fac := Factorization(n); 
          if #fac eq 1 then
             // a_{p^r} := a_p * a_{p^{r-1}} - eps(p)p^{k-1} a_{p^{r-2}}.
@@ -1446,7 +1448,7 @@ function EigenvectorModSymA(A)
       B := Basis(DualRepresentation(A));
       sum := V!0;
       for i := 1 to #B do
-	sum +:= e[i]*V!B[i];
+	      sum +:= e[i]*V!B[i];
       end for;
       A`eigen := sum;
    end if;
@@ -1671,7 +1673,7 @@ end intrinsic;
 
 
 
-intrinsic SystemOfEigenvalues(M::ModSymA, prec::RngIntElt) -> SeqEnum
+intrinsic SystemOfEigenvalues(M::ModSymA, prec::RngIntElt : BadPrimes := true) -> SeqEnum
 {The system of Hecke eigenvalues [a2, a3, a5, a7, ..., a_p] attached to M, where
  p is the largest prime less or equal to prec.  The a_i lie in a quotient of 
  a polynomial extension of the base field of M.  It is assumed that M corresponds
@@ -1687,11 +1689,13 @@ intrinsic SystemOfEigenvalues(M::ModSymA, prec::RngIntElt) -> SeqEnum
         return SystemOfEigenvalues(AssociatedNewSpace(M),prec);   
    end if;
 
+   /*
    if Characteristic(BaseField(M)) eq 0 then
       D := NewformDecomposition(M);
       require #D eq 1 : "Argument 1 must correspond to a single Galois-conjugacy class of newforms.";
       M := D[1];
    end if;
+   */
 
    if IsMultiChar(M) then
       return SystemOfEigenvalues(AssociatedNewformSpace(M), prec);
@@ -1707,11 +1711,12 @@ intrinsic SystemOfEigenvalues(M::ModSymA, prec::RngIntElt) -> SeqEnum
    require not (eig cmpeq false): "Argument 1 must correspond to a newform.";
 
    dummy := exists(i) { i : i in [1..Degree(eig)] | eig[i] ne 0 };  // nonzero entry
-   Tpei := HeckeImages(AmbientSpace(M),i, prec+1);                         // "time critical"
+   Tpei := HeckeImages(AmbientSpace(M),i, prec+1 : BadPrimes := BadPrimes);                         // "time critical"
    f := Compute_qExpansion(0, PowerSeriesRing(Parent(eig[1]))!0, prec+1, Tpei,
                               DirichletCharacter(M), Weight(M), 
-                              i, eig, true);   // true, so we only get the a_n with n prime.
-   return [Coefficient(f,p) : p in [2..prec] |IsPrime(p)];
+                              i, eig, true : coprime_to := BadPrimes select 1 else Level(M));   
+                              // true, so we only get the a_n with n prime.
+   return [Coefficient(f,p) : p in [2..prec] |IsPrime(p) and (BadPrimes select 1 else Level(M)) mod p ne 0];
 
 end intrinsic;
 

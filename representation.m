@@ -281,16 +281,16 @@ that is isomorphic to M as module of the Hecke algebra}
       if not assigned M`al_decomp // MW: 10 + 2/3 from Dec 2018
           and Dimension(M) gt 10 + 2 * Degree(M) / 3 then
          C := Complement(M); // instant, gets the dual rep of complement
-	 _ := VectorSpace(C);   // much smaller dimension
-	 CompC := Complement(C);
-	 if assigned CompC`dual_representation then
-	    V := CompC`dual_representation;
-	    found_V := true;
-	 end if;
+         _ := VectorSpace(C);   // much smaller dimension
+         CompC := Complement(C);
+         if assigned CompC`dual_representation then
+            V := CompC`dual_representation;
+            found_V := true;
+         end if;
       end if;
 
       if not found_V then
-	 if assigned M`dual_representation then
+	      if assigned M`dual_representation then
             V := M`dual_representation;
          else
             V := DualVectorSpace(AmbientSpace(M));
@@ -307,11 +307,11 @@ that is isomorphic to M as module of the Hecke algebra}
 
          p := 2;
          while Dimension(V) gt Dimension(M) do
-	    // until we are able to correctly write down Hecke operators at
-	    // primes dividing the level
-	    if (assigned M`al_decomp) and
- //	       (not IsOfGammaType(M) and Level(M) mod p eq 0)  then
-		      (Level(M) mod p eq 0) then		
+            // until we are able to correctly write down Hecke operators at
+            // primes dividing the level
+            //if (assigned M`al_decomp) and
+               //	(not IsOfGammaType(M) and Level(M) mod p eq 0)  then
+            if (Level(M) mod p eq 0) then		
                p := NextPrime(p); 
                continue;
             end if;

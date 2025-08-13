@@ -21,6 +21,7 @@
     maps.m
     mestre.m
     misc.m
+    ModelsAndMaps.m
     modsym.m
     multichar.m
     operators.m          

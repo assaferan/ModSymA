@@ -1636,14 +1636,14 @@ function SparseRepresentation(v)
 end function;
 
 
-intrinsic HeckeImages(M::ModSymA, i::RngIntElt, n::RngIntElt) -> SeqEnum
+intrinsic HeckeImages(M::ModSymA, i::RngIntElt, n::RngIntElt : BadPrimes := true) -> SeqEnum
 {The images of the ith standard basis vector
  under the Hecke operators Tp for p<=n prime.
 These are computed using sparse methods that don't
 require computing the full Hecke operator.}  
    assert 1 le i and i le Dimension(M);
    if not IsAmbientSpace(M) then
-      return HeckeImages(AmbientSpace(M),i,n);
+      return HeckeImages(AmbientSpace(M),i,n : BadPrimes := BadPrimes);
    end if;
    if not assigned M`standard_images then
       M`standard_images := [[Representation(M)|] : i in [1..Dimension(M)]];
@@ -1654,7 +1654,11 @@ require computing the full Hecke operator.}
       new_images := [Universe(M`standard_images[i])|]; // avoid copy inside loop
       s := SparseRepresentation(VectorSpace(M).i);  
       while p le n do 
-	 Append(~new_images, TnSparse(M, p, s));
+         if not BadPrimes and (Level(M) mod p eq 0) then
+            Append(~new_images, 0);
+         else  
+	         Append(~new_images, TnSparse(M, p, s));
+         end if;
          p := NextPrime(p);
       end while;
       M`standard_images[i] := M`standard_images[i] cat new_images;
